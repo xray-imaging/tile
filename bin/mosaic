@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+.. module:: mosaic.py
+   :platform: Unix
+   :synopsis: Reads the meta data of a tomographic hdf5 file and generates a table (rst) compatible with sphynx/readthelogs.
+
+"""
+
+import os
+import sys
+import time
+import argparse
+
+from datetime import datetime
+
+from mosaic import log
+from mosaic import config
+from mosaic import mosaic
+
+def init(args):
+    if not os.path.exists(str(args.config)):
+        config.write(str(args.config))
+    else:
+        raise RuntimeError("{0} already exists".format(args.config))
+
+def status(args):
+    config.show_config(args)
+
+def show(args):
+    mosaic.show_pv(args)
+
+def show(args):
+    config.show_config(args)
+
+def sort(args):
+    mosaic.sort(args)
+
+def main():   
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', **config.SECTIONS['general']['config'])
+    show_params   = config.MOSAIC_PARAMS
+    sort_params   = config.MOSAIC_PARAMS
+
+    cmd_parsers = [
+        ('init',        init,           (),                             "Create configuration file"),
+        ('status',      status,         show_params,                    "Show the mosaic-cli status"),
+        ('sort',        sort,           sort_params,                    "Show the mosaic-cli status"),
+    ]
+
+    subparsers = parser.add_subparsers(title="Commands", metavar='')
+
+    for cmd, func, sections, text in cmd_parsers:
+        cmd_params = config.Params(sections=sections)
+        cmd_parser = subparsers.add_parser(cmd, help=text, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        cmd_parser = cmd_params.add_arguments(cmd_parser)
+        cmd_parser.set_defaults(_func=func)
+
+    args = config.parse_known_args(parser, subparser=True)
+
+    # create logger
+    logs_home = args.logs_home
+
+    # make sure logs directory exists
+    if not os.path.exists(logs_home):
+        os.makedirs(logs_home)
+
+    lfname = os.path.join(logs_home, 'mosaic_' + datetime.strftime(datetime.now(), "%Y-%m-%d_%H_%M_%S") + '.log')
+
+    log.setup_custom_logger(lfname)
+    log.debug("Started mosaic")
+    log.warning('Saving log at %s' % lfname)
+    
+    try: 
+        # load args from default (config.py) if not changed
+        config.log_values(args)
+        args._func(args)
+        # undate meta5.config file
+        sections = config.MOSAIC_PARAMS
+        config.write(args.config, args=args, sections=sections)
+    except RuntimeError as e:
+        log.error(str(e))
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

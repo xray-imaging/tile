@@ -29,7 +29,6 @@ def sort(args):
             top = os.path.join(args.file_name, '')
             meta_dict = fileio.extract_meta(args.file_name)
             log.info(json.dumps(meta_dict, indent=4, sort_keys=True))
-            # print(meta_dict)
         else:
             log.error("directory %s does not contain any file" % args.file_name)
 

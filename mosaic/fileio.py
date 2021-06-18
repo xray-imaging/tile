@@ -8,7 +8,8 @@ from mosaic import config
 
 def extract_meta(fname):
 
-    list_to_extract = ('sample_x', 'sample_y')
+    # list_to_extract = ('sample_x', 'sample_y', 'experimenter_name', 'full_file_name',  'sample_in_x', 'sample_in_y', 'proposal', 'sample_name', 'sample_y', 'camera_objective', 'resolution', 'energy', 'camera_distance', 'exposure_time', 'num_angles', 'scintillator_type', 'model')
+    list_to_extract = ('sample_x', 'sample_y', 'full_file_name', 'sample_name', 'resolution', 'camera_objective', 'num_angles', )
 
     if os.path.isdir(fname):
         # Add a trailing slash if missing
@@ -30,6 +31,7 @@ def extract_meta(fname):
 
 def extract_dict(fname, list_to_extract, index=0):
 
-    meta = dxreader.read_dx_meta(fname, label1='/measurement/instrument/sample_motor_stack/setup/', label2='/measurement/instrument/sample_motor_stack/setup/') 
+    meta = dxreader.read_dx_meta(fname, label1='/measurement/instrument/sample_motor_stack/setup/', label2='/measurement/') 
+    print(meta)
     sub_dict = {(('%3.3d' % index) +'_' + k):v for k, v in meta.items() if k in list_to_extract}
     return sub_dict

@@ -44,9 +44,9 @@ def main():
     sort_params   = config.MOSAIC_PARAMS
 
     cmd_parsers = [
-        ('init',        init,           (),                             "Create configuration file"),
-        ('status',      status,         show_params,                    "Show the mosaic-cli status"),
-        ('sort',        sort,           sort_params,                    "Show the mosaic-cli status"),
+        ('init',        init,           (),                 "Create configuration file"),
+        ('status',      status,         show_params,        "Show the mosaic-cli status"),
+        ('sort',        sort,           sort_params,        "Sort the mosaic tomography files"),
     ]
 
     subparsers = parser.add_subparsers(title="Commands", metavar='')

@@ -35,59 +35,22 @@ SECTIONS['file-reading'] = {
     'file-name': {
         'default': '.',
         'type': Path,
-        'help': "Name of the last used hdf file or directory containing multiple hdf files",
+        'help': "Name of the last used directory containing multiple hdf files",
         'metavar': 'PATH'},
     'file-format': {
         'default': 'dx',
         'type': str,
         'help': "see from https://dxchange.readthedocs.io/en/latest/source/demo.html",
         'choices': ['dx', 'anka', 'australian', 'als', 'elettra', 'esrf', 'aps1id', 'aps2bm', 'aps5bm', 'aps7bm', 'aps8bm', 'aps13bm', 'aps32id', 'petraP05', 'tomcat', 'xradia']},
-    'file-type': {
-        'default': 'standard',
-        'type': str,
-        'help': "Input file type",
-        'choices': ['standard', 'flip_and_stich', 'mosaic']},
     'nsino': {
         'default': 0.5,
         'type': float,
         'help': 'Location of the sinogram used for slice reconstruction and find axis (0 top, 1 bottom)'},
-    'nsino-per-chunk': {     
-        'type': int,
-        'default': 256,
-        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory.  Value <= 0 defaults to # of cpus.",},
     'binning': {
         'type': util.positive_int,
         'default': 0,
         'help': "Reconstruction binning factor as power(2, choice)",
         'choices': [0, 1, 2, 3]},
-    'reverse': {
-        'default': False,
-        'help': 'When set, the data set was collected in reverse (180-0)',
-        'action': 'store_true'},
-    'blocked-views': {
-        'default': False,
-        'help': 'When set, the blocked-views options are used',
-        'action': 'store_true'},
-    'dark-zero': {
-        'default': False,
-        'help': 'When set, the the dark field is set to zero',
-        'action': 'store_true'},
-    'start-row': {
-        'default': 0,
-        'type': int,
-        'help': 'Row on which to start reconstructions'},
-    'end-row': {
-        'default': -1,
-        'type': int,
-        'help': 'Row on which to end reconstruction.  Negative values = last row of projection data.'},
-    'scintillator-auto': {
-        'default': False,
-        'help': "When set, read scintillator properties from the HDF file",
-        'action': 'store_true'},
-    'pixel-size-auto': {
-        'default': False,
-        'help': "When set, read effective pixel size from the HDF file",
-        'action': 'store_true'},
        }
 
 

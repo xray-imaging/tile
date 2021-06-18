@@ -45,15 +45,15 @@ Usage
     $ mosaic init
         Creates a mosaic.conf default file
 
-    $ orthorec status 
-        Show the last used orthorec parameters
+    $ mosaic status 
+        Show the last used mosaic parameters
 
     $ mosaic sort -h
 
 Example
 -------
 
-Reconstruct 3 orthogonal slices in position (idx, idy, idz) with multiple position of the rotation axis center (center, center-search-step, center-search-width)::
+Extract all meta data needed to compose a mosaic tomography dataset::
 
     $ mosaic sort --file-name /local/data/mosaic/
          2021-06-18 18:16:47,621 - Started mosaic

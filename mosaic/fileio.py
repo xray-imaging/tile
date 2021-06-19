@@ -32,6 +32,5 @@ def extract_meta(fname):
 def extract_dict(fname, list_to_extract, index=0):
 
     meta = dxreader.read_dx_meta(fname, label1='/measurement/instrument/sample_motor_stack/setup/', label2='/measurement/') 
-    print(meta)
     sub_dict = {(('%3.3d' % index) +'_' + k):v for k, v in meta.items() if k in list_to_extract}
     return sub_dict

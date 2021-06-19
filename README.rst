@@ -38,7 +38,7 @@ Usage
   
     init         Create configuration file
     status       Show the mosaic-cli status
-    sort         Sort the mosaic tomography files
+    extract      Extract all meta data needed to compose a mosaic dataset
 
 ::
 
@@ -48,16 +48,16 @@ Usage
     $ mosaic status 
         Show the last used mosaic parameters
 
-    $ mosaic sort -h
+    $ mosaic extract -h
 
 Example
 -------
 
 Extract all meta data needed to compose a mosaic tomography dataset::
 
-    $ mosaic sort --file-name /local/data/mosaic/
+    $ mosaic extract --file-name /local/data/mosaic/
          2021-06-18 18:16:47,621 - Started mosaic
-         021-06-18 18:16:47,621 - Saving log at /home/beams/FAST/logs/mosaic_2021-06-18_18_16_47.log
+         2021-06-18 18:16:47,621 - Saving log at /home/beams/FAST/logs/mosaic_2021-06-18_18_16_47.log
          2021-06-18 18:16:47,621 - General
          2021-06-18 18:16:47,621 -   config           /home/beams/FAST/mosaic.conf
          2021-06-18 18:16:47,621 -   verbose          True

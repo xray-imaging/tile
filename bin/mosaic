@@ -34,19 +34,19 @@ def show(args):
 def show(args):
     config.show_config(args)
 
-def sort(args):
-    mosaic.sort(args)
+def extract(args):
+    mosaic.extract(args)
 
 def main():   
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', **config.SECTIONS['general']['config'])
-    show_params   = config.MOSAIC_PARAMS
-    sort_params   = config.MOSAIC_PARAMS
+    show_params     = config.MOSAIC_PARAMS
+    extract_params  = config.MOSAIC_PARAMS
 
     cmd_parsers = [
         ('init',        init,           (),                 "Create configuration file"),
         ('status',      status,         show_params,        "Show the mosaic-cli status"),
-        ('sort',        sort,           sort_params,        "Sort the mosaic tomography files"),
+        ('extract',     extract,        extract_params,     "Extract the mosaic tomography files"),
     ]
 
     subparsers = parser.add_subparsers(title="Commands", metavar='')

@@ -13,7 +13,7 @@ from mosaic import fileio
 KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 
 
-def sort(args):
+def extract(args):
 
     log.warning('reconstruction start')
     file_path = Path(args.file_name)

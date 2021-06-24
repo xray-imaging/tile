@@ -20,7 +20,7 @@ def extract(args):
 
     if str(args.file_format) in KNOWN_FORMATS:
 
-        if file_path.is_file() or len(next(os.walk(file_path))[2]) == 1:
+        if file_path.is_file(): #or len(next(os.walk(file_path))[2]) == 1:
             log.error("A mosaic dataset requires more than 1 file")
             log.error("%s contains only 1 file" % args.file_name)
         elif file_path.is_dir():
@@ -28,7 +28,12 @@ def extract(args):
             # Add a trailing slash if missing
             top = os.path.join(args.file_name, '')
             meta_dict = fileio.extract_meta(args.file_name)
-            log.info(json.dumps(meta_dict, indent=4, sort_keys=True))
+            # print(meta_dict)
+            x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1]['sample_x'])}
+            y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1]['sample_y'])}
+            for k, v in y_sorted.items():
+                print(k, y_sorted[k]['sample_x'], y_sorted[k]['sample_y'])
+            # log.info(json.dumps(meta_dict, indent=4, sort_keys=True))
         else:
             log.error("directory %s does not contain any file" % args.file_name)
 

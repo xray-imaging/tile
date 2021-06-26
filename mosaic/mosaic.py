@@ -15,7 +15,7 @@ KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 
 def extract(args):
 
-    log.warning('reconstruction start')
+    log.warning('checking mosaic files ...')
     file_path = Path(args.file_name)
 
     if str(args.file_format) in KNOWN_FORMATS:
@@ -28,15 +28,22 @@ def extract(args):
             # Add a trailing slash if missing
             top = os.path.join(args.file_name, '')
             meta_dict = fileio.extract_meta(args.file_name)
-            # print(meta_dict)
-            x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1]['sample_x'])}
-            y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1]['sample_y'])}
-            for k, v in y_sorted.items():
-                print(k, y_sorted[k]['sample_x'], y_sorted[k]['sample_y'])
-            # log.info(json.dumps(meta_dict, indent=4, sort_keys=True))
+
+            return meta_dict
+
         else:
             log.error("directory %s does not contain any file" % args.file_name)
-
     else:
         log.error("  *** %s is not a supported file format" % args.file_format)
         log.error("supported data formats are: %s, %s, %s, %s" % tuple(KNOWN_FORMATS))
+
+
+def sort(args):
+
+    meta_dict = extract(args)
+
+    log.warning('mosaic file sorted')
+    x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1]['sample_x'])}
+    y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1]['sample_y'])}
+
+    return y_sorted

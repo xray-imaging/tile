@@ -35,18 +35,27 @@ def show(args):
     config.show_config(args)
 
 def extract(args):
-    mosaic.extract(args)
+    meta_dict = mosaic.extract(args)
+    for k, v in meta_dict.items():
+        log.info("%s, %s, %s. Original file name: %s", k, meta_dict[k]['sample_x'], meta_dict[k]['sample_y'], meta_dict[k]['full_file_name'][0])
+
+def sort(args):
+    meta_dict = mosaic.sort(args)
+    for k, v in meta_dict.items():
+        log.info("%s, %s, %s. Original file name: %s", k, meta_dict[k]['sample_x'], meta_dict[k]['sample_y'], meta_dict[k]['full_file_name'][0])
 
 def main():   
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', **config.SECTIONS['general']['config'])
     show_params     = config.MOSAIC_PARAMS
     extract_params  = config.MOSAIC_PARAMS
+    sort_params     = config.MOSAIC_PARAMS
 
     cmd_parsers = [
         ('init',        init,           (),                 "Create configuration file"),
         ('status',      status,         show_params,        "Show the mosaic-cli status"),
         ('extract',     extract,        extract_params,     "Extract the mosaic tomography files"),
+        ('sort',        sort,           sort_params,        "Sort the mosaic tomography files according to their tile location"),
     ]
 
     subparsers = parser.add_subparsers(title="Commands", metavar='')

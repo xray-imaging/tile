@@ -112,3 +112,39 @@ Sort all meta data needed to compose a mosaic tomography dataset::
     2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_w.h5, [-1.5347723092418164e-12, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_013.h5
     2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_g.h5, [3.7999999999984766, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_014.h5
     2021-06-25 18:58:31,975 - /local/data/mosaic/tomosaic_tile_k.h5, [7.5999999999984595, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_015.h5
+
+
+Add the tile coordinated (top-left is x0y0) to compose a mosaic tomography dataset::
+
+    $ mosaic tile --file-name /local/data/mosaic/
+    Warning: dxfile module not found
+    Warning: netCDF4 module not found
+    spefile module not found
+    netCDF4 module not found
+    EdfFile module not found
+    2021-07-09 18:21:31,268 - Started mosaic
+    2021-07-09 18:21:31,268 - Saving log at /home/beams/FAST/logs/mosaic_2021-07-09_18_21_31.log
+    2021-07-09 18:21:31,268 - General
+    2021-07-09 18:21:31,268 -   config           /home/beams/FAST/mosaic.conf
+    2021-07-09 18:21:31,268 -   verbose          True
+    2021-07-09 18:21:31,268 - File reading
+    2021-07-09 18:21:31,268 -   binning          0
+    2021-07-09 18:21:31,268 -   nsino            0.5
+    2021-07-09 18:21:31,268 - checking mosaic files ...
+    2021-07-09 18:21:31,269 - Checking directory: /local/data/mosaic for a mosaic scan
+    2021-07-09 18:21:32,689 - mosaic file sorted
+    2021-07-09 18:21:32,690 - x0y0: x = -7.600000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_x.h5
+    2021-07-09 18:21:32,690 - x1y0: x = -3.800000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_a.h5
+    2021-07-09 18:21:32,690 - x2y0: x = -0.000000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_r.h5
+    2021-07-09 18:21:32,690 - x3y0: x = 3.800000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_p.h5
+    2021-07-09 18:21:32,690 - x4y0: x = 7.600000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_f.h5
+    2021-07-09 18:21:32,690 - x0y1: x = -7.600000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_d.h5
+    2021-07-09 18:21:32,691 - x1y1: x = -3.800000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_z.h5
+    2021-07-09 18:21:32,691 - x2y1: x = -0.000000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_j.h5
+    2021-07-09 18:21:32,691 - x3y1: x = 3.800000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_m.h5
+    2021-07-09 18:21:32,691 - x4y1: x = 7.600000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_h.h5
+    2021-07-09 18:21:32,691 - x0y2: x = -7.600000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_n.h5
+    2021-07-09 18:21:32,691 - x1y2: x = -3.800000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_o.h5
+    2021-07-09 18:21:32,691 - x2y2: x = -0.000000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_w.h5
+    2021-07-09 18:21:32,691 - x3y2: x = 3.800000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_g.h5
+    2021-07-09 18:21:32,691 - x4y2: x = 7.600000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_k.h5

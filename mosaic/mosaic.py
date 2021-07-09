@@ -47,3 +47,51 @@ def sort(args):
     y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1]['sample_y'])}
 
     return y_sorted
+
+def keyshift(dictionary, key, diff):
+    if key in dictionary:
+        token = object()
+        keys = [token]*(diff*-1) + sorted(dictionary) + [token]*diff
+        newkey = keys[keys.index(key)+diff]
+        if newkey is token:
+            return None
+            # print None
+        else:
+            return newkey
+            print ({newkey: dictionary[newkey]})
+    # else:
+    #     print 'Key not found'
+
+def tile(args):
+    meta_dict = extract(args)
+
+    log.warning('mosaic file sorted')
+    x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1]['sample_x'])}
+    y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1]['sample_y'])}
+    first_key = list(y_sorted.keys())[0]
+
+    tile_index_x = 0
+    tile_index_y = 0
+    x_start = y_sorted[first_key]['sample_x'][0] - 1
+    y_start = y_sorted[first_key]['sample_y'][0] - 1 
+
+    tile_dict = {}
+
+    for k, v in y_sorted.items():
+
+        if meta_dict[k]['sample_x'][0] > x_start:
+            key = 'x' + str(tile_index_x) + 'y' + str(tile_index_y)
+
+            log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k]['sample_x'][0], meta_dict[k]['sample_y'][0], k, meta_dict[k]['full_file_name'][0]))
+            tile_index_x = tile_index_x + 1
+            x_start = meta_dict[k]['sample_x'][0]
+        else:
+            tile_index_x = 0
+            tile_index_y = tile_index_y + 1
+            key = 'x' + str(tile_index_x) + 'y' + str(tile_index_y)
+            log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k]['sample_x'][0], meta_dict[k]['sample_y'][0], k, meta_dict[k]['full_file_name'][0]))
+            tile_index_x = tile_index_x + 1
+            x_start = y_sorted[first_key]['sample_x'][0] - 1
+
+
+    return tile_dict

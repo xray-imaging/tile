@@ -70,12 +70,16 @@ def tile(args):
     log.warning('mosaic file sorted')
     x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1]['sample_x'])}
     y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1]['sample_y'])}
+    
     first_key = list(y_sorted.keys())[0]
-
+    second_key = list(y_sorted.keys())[1]
+    # print(y_sorted)
     tile_index_x = 0
     tile_index_y = 0
     x_start = y_sorted[first_key]['sample_x'][0] - 1
     y_start = y_sorted[first_key]['sample_y'][0] - 1 
+
+    x_shift = int((1000*(x_sorted[second_key]['sample_x'][0]- x_sorted[first_key]['sample_x'][0]))/y_sorted[first_key]['resolution'][0])
 
     tile_dict = {}
 
@@ -83,10 +87,11 @@ def tile(args):
 
         if meta_dict[k]['sample_x'][0] > x_start:
             key = 'x' + str(tile_index_x) + 'y' + str(tile_index_y)
-
+            # key = [str(tile_index_x),s tr(tile_index_y)]
             log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k]['sample_x'][0], meta_dict[k]['sample_y'][0], k, meta_dict[k]['full_file_name'][0]))
             tile_index_x = tile_index_x + 1
             x_start = meta_dict[k]['sample_x'][0]
+            first_y = meta_dict[k]['sample_y'][0]
         else:
             tile_index_x = 0
             tile_index_y = tile_index_y + 1
@@ -94,11 +99,9 @@ def tile(args):
             log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k]['sample_x'][0], meta_dict[k]['sample_y'][0], k, meta_dict[k]['full_file_name'][0]))
             tile_index_x = tile_index_x + 1
             x_start = y_sorted[first_key]['sample_x'][0] - 1
+            y_shift = int((1000*(meta_dict[k]['sample_y'][0] - first_y)/y_sorted[first_key]['resolution'][0]))
 
         tile_dict[key] = k 
-        # tile_dict[key] = k:[tile_index_y, tile_index_x]
-        # tile_dict[key][0] = [tile_index_y, tile_index_x]
-        # tile_dict[key]['index_listx'][0] = 0
 
     tile_index_x_max  = tile_index_x
     tile_index_y_max  = tile_index_y + 1
@@ -118,5 +121,4 @@ def tile(args):
         grid[ind_list[k_file, 1], ind_list[k_file, 0]] = v
         k_file = k_file + 1 
 
-    print (grid)
-    return tile_dict, grid
+    return tile_dict, grid, x_shift, y_shift

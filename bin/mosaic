@@ -12,6 +12,8 @@ import os
 import sys
 import time
 import argparse
+import numpy as np
+import pandas as pd
 
 from datetime import datetime
 
@@ -45,9 +47,13 @@ def sort(args):
         log.info("%s, %s, %s. Original file name: %s", k, meta_dict[k]['sample_x'], meta_dict[k]['sample_y'], meta_dict[k]['full_file_name'][0])
 
 def tile(args):
-    meta_dict = mosaic.tile(args)
-    # for k, v in meta_dict.items():
-    #     log.info("%s", k)
+    tile_dict, grid, x_shift, y_shift = mosaic.tile(args)
+    log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
+
+    columns = [f'x_{num}' for num in range(5)]
+    index = [f'y_{num}' for num in range(3)]
+    log.info('file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
+
 
 
 def main():   

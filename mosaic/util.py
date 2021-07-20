@@ -1,8 +1,11 @@
 """Various utility functions."""
+import re
 import os
 import glob
 import math
 import argparse
+import numpy as np
+
 from collections import OrderedDict
 
 from mosaic import log
@@ -32,3 +35,16 @@ def positive_int(value):
         raise argparse.ArgumentTypeError('Only positive integers are allowed')
 
     return result
+
+def get_index(file_list):
+    '''
+    Get tile indices.
+    :param file_list: list of files.
+    :param pattern: pattern of naming. For files named with x_*_y_*, use
+                    pattern=0. For files named with y_*_x_*, use pattern=1.
+    :return: 
+    '''
+    regex = re.compile(r".+_x(\d+)_y(\d+).+")
+    ind_buff = [m.group(1, 2) for l in file_list for m in [regex.search(l)] if m]
+
+    return np.asarray(ind_buff).astype('int')

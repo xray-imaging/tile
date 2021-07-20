@@ -1,8 +1,10 @@
 import os
+import re
 import sys
 import json
 import argparse
 import datetime
+import numpy as np
 
 from pathlib import Path
 from mosaic import log
@@ -93,5 +95,28 @@ def tile(args):
             tile_index_x = tile_index_x + 1
             x_start = y_sorted[first_key]['sample_x'][0] - 1
 
+        tile_dict[key] = k 
+        # tile_dict[key] = k:[tile_index_y, tile_index_x]
+        # tile_dict[key][0] = [tile_index_y, tile_index_x]
+        # tile_dict[key]['index_listx'][0] = 0
 
-    return tile_dict
+    tile_index_x_max  = tile_index_x
+    tile_index_y_max  = tile_index_y + 1
+
+    index_list = []
+    for k, v in tile_dict.items():
+        index_list.append(k)
+
+    regex = re.compile(r"x(\d+)y(\d+)")
+    ind_buff = [m.group(1, 2) for l in index_list for m in [regex.search(l)] if m]
+    ind_list = np.asarray(ind_buff).astype('int')
+
+    grid = np.empty((tile_index_y_max, tile_index_x_max), dtype=object)
+
+    k_file = 0
+    for k, v in tile_dict.items():
+        grid[ind_list[k_file, 1], ind_list[k_file, 0]] = v
+        k_file = k_file + 1 
+
+    print (grid)
+    return tile_dict, grid

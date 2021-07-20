@@ -117,11 +117,6 @@ Sort all meta data needed to compose a mosaic tomography dataset::
 Add the tile coordinated (top-left is x0y0) to compose a mosaic tomography dataset::
 
     $ mosaic tile --file-name /local/data/mosaic/
-    Warning: dxfile module not found
-    Warning: netCDF4 module not found
-    spefile module not found
-    netCDF4 module not found
-    EdfFile module not found
     2021-07-09 18:21:31,268 - Started mosaic
     2021-07-09 18:21:31,268 - Saving log at /home/beams/FAST/logs/mosaic_2021-07-09_18_21_31.log
     2021-07-09 18:21:31,268 - General
@@ -148,3 +143,24 @@ Add the tile coordinated (top-left is x0y0) to compose a mosaic tomography datas
     2021-07-09 18:21:32,691 - x2y2: x = -0.000000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_w.h5
     2021-07-09 18:21:32,691 - x3y2: x = 3.800000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_g.h5
     2021-07-09 18:21:32,691 - x4y2: x = 7.600000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_k.h5
+
+Return a numpy array containing the tile filename::
+
+    $ mosaic tile --file-name /local/data/mosaic/
+    2021-07-20 00:08:00,877 - Started mosaic
+    2021-07-20 00:08:00,877 - Saving log at /home/beams/FAST/logs/mosaic_2021-07-20_00_08_00.log
+    2021-07-20 00:08:00,877 - General
+    2021-07-20 00:08:00,877 -   config           /home/beams/FAST/mosaic.conf
+    2021-07-20 00:08:00,877 -   verbose          True
+    2021-07-20 00:08:00,877 - File reading
+    2021-07-20 00:08:00,877 -   binning          0
+    2021-07-20 00:08:00,877 -   nsino            0.5
+    2021-07-20 00:08:00,878 - checking mosaic files ...
+    2021-07-20 00:08:00,878 - Checking directory: /local/data/mosaic for a mosaic scan
+    2021-07-20 00:08:02,340 - mosaic file sorted
+    2021-07-20 00:08:02,343 - mosaic shift (x, y) in pixels: (2235, 823)
+    2021-07-20 00:08:02,362 - mosaic file name grid:
+                                           x_0                                    x_1                                    x_2                                    x_3                                    x_4
+    y_0  /local/data/mosaic/tomosaic_tile_x.h5  /local/data/mosaic/tomosaic_tile_a.h5  /local/data/mosaic/tomosaic_tile_r.h5  /local/data/mosaic/tomosaic_tile_p.h5  /local/data/mosaic/tomosaic_tile_f.h5
+    y_1  /local/data/mosaic/tomosaic_tile_d.h5  /local/data/mosaic/tomosaic_tile_z.h5  /local/data/mosaic/tomosaic_tile_j.h5  /local/data/mosaic/tomosaic_tile_m.h5  /local/data/mosaic/tomosaic_tile_h.h5
+    y_2  /local/data/mosaic/tomosaic_tile_n.h5  /local/data/mosaic/tomosaic_tile_o.h5  /local/data/mosaic/tomosaic_tile_w.h5  /local/data/mosaic/tomosaic_tile_g.h5  /local/data/mosaic/tomosaic_tile_k.h5

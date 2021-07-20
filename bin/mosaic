@@ -52,7 +52,7 @@ def tile(args):
 
     columns = [f'x_{num}' for num in range(5)]
     index = [f'y_{num}' for num in range(3)]
-    log.info('file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
+    log.info('mosaic file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
 
 
 

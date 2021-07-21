@@ -48,3 +48,20 @@ def get_index(file_list):
     ind_buff = [m.group(1, 2) for l in file_list for m in [regex.search(l)] if m]
 
     return np.asarray(ind_buff).astype('int')
+
+
+def find_min_max(data):
+    """Find min and max values according to histogram"""
+    
+    mmin = np.zeros(data.shape[0],dtype='float32')
+    mmax = np.zeros(data.shape[0],dtype='float32')
+    
+    for k in range(data.shape[0]):
+        h, e = np.histogram(data[k][:],1000)
+        stend = np.where(h>np.max(h)*0.005)
+        st = stend[0][0]
+        end = stend[0][-1]        
+        mmin[k] = e[st]
+        mmax[k] = e[end+1]
+     
+    return mmin,mmax

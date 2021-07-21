@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-.. module:: mosaic.py
+.. module:: fileio.py
    :platform: Unix
    :synopsis: Reads the meta data of a tomographic hdf5 file and generates a table (rst) compatible with sphynx/readthelogs.
 
@@ -19,7 +19,7 @@ from datetime import datetime
 
 from mosaic import log
 from mosaic import config
-from mosaic import mosaic
+from mosaic import fileio
 
 def init(args):
     if not os.path.exists(str(args.config)):
@@ -30,24 +30,18 @@ def init(args):
 def status(args):
     config.show_config(args)
 
-def show(args):
-    mosaic.show_pv(args)
-
-def show(args):
-    config.show_config(args)
-
 def extract(args):
-    meta_dict = mosaic.extract(args)
+    meta_dict = fileio.extract(args)
     for k, v in meta_dict.items():
         log.info("%s, %s, %s. Original file name: %s", k, meta_dict[k]['sample_x'], meta_dict[k]['sample_y'], meta_dict[k]['full_file_name'][0])
 
 def sort(args):
-    meta_dict = mosaic.sort(args)
+    meta_dict = fileio.sort(args)
     for k, v in meta_dict.items():
         log.info("%s, %s, %s. Original file name: %s", k, meta_dict[k]['sample_x'], meta_dict[k]['sample_y'], meta_dict[k]['full_file_name'][0])
 
 def tile(args):
-    tile_dict, grid, x_shift, y_shift = mosaic.tile(args)
+    tile_dict, grid, x_shift, y_shift = fileio.tile(args)
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
 
     columns = [f'x_{num}' for num in range(5)]

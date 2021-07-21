@@ -64,4 +64,4 @@ def find_min_max(data):
         mmin[k] = e[st]
         mmax[k] = e[end+1]
      
-    return mmin,mmax
+    return mmin, mmax

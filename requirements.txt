@@ -1,0 +1,10 @@
+numpy
+pandas
+dxchange
+h5py
+scipy
+tomopy
+libopencv
+opencv
+py-opencv
+tifffile

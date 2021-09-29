@@ -47,6 +47,8 @@ def sort(args):
 
 def tile(args):
     tile_dict, grid, x_shift, y_shift = fileio.tile(args)
+    proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[0,0], proj=(0, 10))
+    log.info('image   size (x, y) in pixels: (%d, %d)' % (proj0.shape[2], proj0.shape[1]))
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
 
     columns = [f'x_{num}' for num in range(grid.shape[0])]

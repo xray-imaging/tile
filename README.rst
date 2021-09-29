@@ -52,14 +52,14 @@ Usage
     $ mosaic status 
         Show the last used mosaic parameters
 
-    $ mosaic shift -h
+    $ mosaic tile -h
 
 Example
 -------
 
 ::
 
-    $ mosaic shift --file-name /local/data/2021-09/mosaic_data_folder/
+    $ mosaic tile --file-name /local/data/2021-09/mosaic_data_folder/
 
 Return a numpy array containing the tile filename::
 

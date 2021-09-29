@@ -17,7 +17,7 @@ import pandas as pd
 import dxchange
 import tomopy
 import matplotlib.pyplot as plt
-
+from matplotlib.colors import NoNorm
 
 from datetime import datetime
 
@@ -49,29 +49,30 @@ def tile(args):
     tile_dict, grid, x_shift, y_shift = fileio.tile(args)
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
 
-    columns = [f'x_{num}' for num in range(5)]
-    index = [f'y_{num}' for num in range(3)]
+    columns = [f'x_{num}' for num in range(grid.shape[0])]
+    index = [f'y_{num}' for num in range(grid.shape[1])]
     log.info('mosaic file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
 
 def shift(args):
     tile_dict, grid, x_shift, y_shift = fileio.tile(args)
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
 
-    columns = [f'x_{num}' for num in range(5)]
-    index = [f'y_{num}' for num in range(3)]
-    log.info('mosaic file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
-
+    columns = [f'x_{num}' for num in range(grid.shape[0])]
+    index = [f'y_{num}' for num in range(grid.shape[0])]
 
     proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[0,0], proj=(0, 10))
     proj1, flat1, dark1, _, _ = dxchange.read_dx(grid[0,1], proj=(0, 10))
     norm0 = tomopy.normalize(proj0, flat0, dark0)
     norm1 = tomopy.normalize(proj1, flat1, dark1)
-    # plt.imshow(norm0[0,:,:])
-    # plt.show()    
-    # plt.imshow(norm1[0,:,:])
-    # plt.show()
-    print(norm0.shape)
-    mosaic.register_shift_sift(norm0, norm1)
+    log.info('image   size (x, y) in pixels: (%d, %d)' % (norm0.shape[2], norm0.shape[1]))
+    log.info('mosaic file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
+
+    plt.imshow(norm0[0,:,:],cmap='nipy_spectral',norm=NoNorm())
+    plt.show()    
+    plt.imshow(norm1[0,:,:],cmap='nipy_spectral',norm=NoNorm())
+    plt.show()
+    # print(norm0.shape)
+    # mosaic.register_shift_sift(norm0, norm1)
 
 def main():   
     parser = argparse.ArgumentParser()

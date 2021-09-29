@@ -19,7 +19,7 @@ def register_shift_sift(datap1, datap2):
         tmp1 = ((datap2[id]-mmin[id]) / (mmax[id]-mmin[id])*2550.)
         tmp1[tmp1 > 255] = 255
         tmp1[tmp1 < 0] = 0
-        print(mmin[id], mmax[id], mmax[id]-mmin[id])
+        # print(mmin[id], mmax[id], mmax[id]-mmin[id])
         plt.imshow(tmp1)
         plt.show()    
         tmp2 = ((datap1[id]-mmin[id]) /

@@ -53,114 +53,36 @@ Usage
 Example
 -------
 
-Extract all meta data needed to compose a mosaic tomography dataset::
+::
 
-    $ mosaic extract --file-name /local/data/mosaic/
-    2021-06-25 18:57:24,077 - Started mosaic
-    2021-06-25 18:57:24,078 - Saving log at /home/beams/FAST/logs/mosaic_2021-06-25_18_57_24.log
-    2021-06-25 18:57:24,078 - General
-    2021-06-25 18:57:24,078 -   config           /home/beams/FAST/mosaic.conf
-    2021-06-25 18:57:24,078 -   verbose          True
-    2021-06-25 18:57:24,078 - File reading
-    2021-06-25 18:57:24,078 -   binning          0
-    2021-06-25 18:57:24,078 -   nsino            0.5
-    2021-06-25 18:57:24,078 - checking mosaic files ...
-    2021-06-25 18:57:24,078 - Checking directory: /local/data/mosaic for a mosaic scan
-    2021-06-25 18:57:26,010 - /local/data/mosaic/tomosaic_tile_a.h5, [-3.800000000001546, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_002.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_d.h5, [-7.600000000001529, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_006.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_f.h5, [7.5999999999984595, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_005.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_g.h5, [3.7999999999984766, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_014.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_h.h5, [7.5999999999984595, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_010.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_j.h5, [-1.5347723092418164e-12, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_008.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_k.h5, [7.5999999999984595, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_015.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_m.h5, [3.7999999999984766, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_009.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_n.h5, [-7.600000000001529, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_011.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_o.h5, [-3.800000000001546, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_012.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_p.h5, [3.7999999999984766, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_004.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_r.h5, [-1.5347723092418164e-12, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_003.h5
-    2021-06-25 18:57:26,011 - /local/data/mosaic/tomosaic_tile_w.h5, [-1.5347723092418164e-12, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_013.h5
-    2021-06-25 18:57:26,012 - /local/data/mosaic/tomosaic_tile_x.h5, [-7.600000000001529, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_001.h5
-    2021-06-25 18:57:26,012 - /local/data/mosaic/tomosaic_tile_z.h5, [-3.800000000001546, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_007.h5
-
-
-Sort all meta data needed to compose a mosaic tomography dataset::
-
-    $ mosaic sort --file-name /local/data/mosaic/
-    2021-06-25 18:58:29,993 - Started mosaic
-    2021-06-25 18:58:29,994 - Saving log at /home/beams/FAST/logs/mosaic_2021-06-25_18_58_29.log
-    2021-06-25 18:58:29,994 - General
-    2021-06-25 18:58:29,994 -   config           /home/beams/FAST/mosaic.conf
-    2021-06-25 18:58:29,994 -   verbose          True
-    2021-06-25 18:58:29,994 - File reading
-    2021-06-25 18:58:29,994 -   binning          0
-    2021-06-25 18:58:29,994 -   nsino            0.5
-    2021-06-25 18:58:29,994 - checking mosaic files ...
-    2021-06-25 18:58:29,994 - Checking directory: /local/data/mosaic for a mosaic scan
-    2021-06-25 18:58:31,973 - mosaic file sorted
-    2021-06-25 18:58:31,973 - /local/data/mosaic/tomosaic_tile_x.h5, [-7.600000000001529, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_001.h5
-    2021-06-25 18:58:31,973 - /local/data/mosaic/tomosaic_tile_a.h5, [-3.800000000001546, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_002.h5
-    2021-06-25 18:58:31,973 - /local/data/mosaic/tomosaic_tile_r.h5, [-1.5347723092418164e-12, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_003.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_p.h5, [3.7999999999984766, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_004.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_f.h5, [7.5999999999984595, 'mm'], [17.599999999999994, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_005.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_d.h5, [-7.600000000001529, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_006.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_z.h5, [-3.800000000001546, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_007.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_j.h5, [-1.5347723092418164e-12, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_008.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_m.h5, [3.7999999999984766, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_009.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_h.h5, [7.5999999999984595, 'mm'], [18.999999999999996, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_010.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_n.h5, [-7.600000000001529, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_011.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_o.h5, [-3.800000000001546, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_012.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_w.h5, [-1.5347723092418164e-12, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_013.h5
-    2021-06-25 18:58:31,974 - /local/data/mosaic/tomosaic_tile_g.h5, [3.7999999999984766, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_014.h5
-    2021-06-25 18:58:31,975 - /local/data/mosaic/tomosaic_tile_k.h5, [7.5999999999984595, 'mm'], [20.399999999999995, 'mm']. Original file name: /local/data/2021-06/Kaoumi/4_top_015.h5
-
-
-Add the tile coordinated (top-left is x0y0) to compose a mosaic tomography dataset::
-
-    $ mosaic tile --file-name /local/data/mosaic/
-    2021-07-09 18:21:31,268 - Started mosaic
-    2021-07-09 18:21:31,268 - Saving log at /home/beams/FAST/logs/mosaic_2021-07-09_18_21_31.log
-    2021-07-09 18:21:31,268 - General
-    2021-07-09 18:21:31,268 -   config           /home/beams/FAST/mosaic.conf
-    2021-07-09 18:21:31,268 -   verbose          True
-    2021-07-09 18:21:31,268 - File reading
-    2021-07-09 18:21:31,268 -   binning          0
-    2021-07-09 18:21:31,268 -   nsino            0.5
-    2021-07-09 18:21:31,268 - checking mosaic files ...
-    2021-07-09 18:21:31,269 - Checking directory: /local/data/mosaic for a mosaic scan
-    2021-07-09 18:21:32,689 - mosaic file sorted
-    2021-07-09 18:21:32,690 - x0y0: x = -7.600000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_x.h5
-    2021-07-09 18:21:32,690 - x1y0: x = -3.800000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_a.h5
-    2021-07-09 18:21:32,690 - x2y0: x = -0.000000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_r.h5
-    2021-07-09 18:21:32,690 - x3y0: x = 3.800000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_p.h5
-    2021-07-09 18:21:32,690 - x4y0: x = 7.600000; y = 17.600000, file name = /local/data/mosaic/tomosaic_tile_f.h5
-    2021-07-09 18:21:32,690 - x0y1: x = -7.600000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_d.h5
-    2021-07-09 18:21:32,691 - x1y1: x = -3.800000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_z.h5
-    2021-07-09 18:21:32,691 - x2y1: x = -0.000000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_j.h5
-    2021-07-09 18:21:32,691 - x3y1: x = 3.800000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_m.h5
-    2021-07-09 18:21:32,691 - x4y1: x = 7.600000; y = 19.000000, file name = /local/data/mosaic/tomosaic_tile_h.h5
-    2021-07-09 18:21:32,691 - x0y2: x = -7.600000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_n.h5
-    2021-07-09 18:21:32,691 - x1y2: x = -3.800000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_o.h5
-    2021-07-09 18:21:32,691 - x2y2: x = -0.000000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_w.h5
-    2021-07-09 18:21:32,691 - x3y2: x = 3.800000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_g.h5
-    2021-07-09 18:21:32,691 - x4y2: x = 7.600000; y = 20.400000, file name = /local/data/mosaic/tomosaic_tile_k.h5
+    $ mosaic shift --file-name /local/data/2021-09/mosaic_data_folder/
 
 Return a numpy array containing the tile filename::
 
-    $ mosaic tile --file-name /local/data/mosaic/
-    2021-07-20 00:08:00,877 - Started mosaic
-    2021-07-20 00:08:00,877 - Saving log at /home/beams/FAST/logs/mosaic_2021-07-20_00_08_00.log
-    2021-07-20 00:08:00,877 - General
-    2021-07-20 00:08:00,877 -   config           /home/beams/FAST/mosaic.conf
-    2021-07-20 00:08:00,877 -   verbose          True
-    2021-07-20 00:08:00,877 - File reading
-    2021-07-20 00:08:00,877 -   binning          0
-    2021-07-20 00:08:00,877 -   nsino            0.5
-    2021-07-20 00:08:00,878 - checking mosaic files ...
-    2021-07-20 00:08:00,878 - Checking directory: /local/data/mosaic for a mosaic scan
-    2021-07-20 00:08:02,340 - mosaic file sorted
-    2021-07-20 00:08:02,343 - mosaic shift (x, y) in pixels: (2235, 823)
-    2021-07-20 00:08:02,362 - mosaic file name grid:
-                                           x_0                                    x_1                                    x_2                                    x_3                                    x_4
-    y_0  /local/data/mosaic/tomosaic_tile_x.h5  /local/data/mosaic/tomosaic_tile_a.h5  /local/data/mosaic/tomosaic_tile_r.h5  /local/data/mosaic/tomosaic_tile_p.h5  /local/data/mosaic/tomosaic_tile_f.h5
-    y_1  /local/data/mosaic/tomosaic_tile_d.h5  /local/data/mosaic/tomosaic_tile_z.h5  /local/data/mosaic/tomosaic_tile_j.h5  /local/data/mosaic/tomosaic_tile_m.h5  /local/data/mosaic/tomosaic_tile_h.h5
-    y_2  /local/data/mosaic/tomosaic_tile_n.h5  /local/data/mosaic/tomosaic_tile_o.h5  /local/data/mosaic/tomosaic_tile_w.h5  /local/data/mosaic/tomosaic_tile_g.h5  /local/data/mosaic/tomosaic_tile_k.h5
+    2021-09-28 19:43:41,178 - Started mosaic
+    2021-09-28 19:43:41,178 - Saving log at /home/beams/FAST/logs/mosaic_2021-09-28_19_43_41.log
+    2021-09-28 19:43:41,178 - General
+    2021-09-28 19:43:41,178 -   config           /home/beams/FAST/mosaic.conf
+    2021-09-28 19:43:41,178 -   verbose          True
+    2021-09-28 19:43:41,178 - File reading
+    2021-09-28 19:43:41,179 -   binning          0
+    2021-09-28 19:43:41,179 -   nsino            0.5
+    2021-09-28 19:43:41,179 - checking mosaic files ...
+    2021-09-28 19:43:41,179 - Checking directory: /local/data/2021-09/Pasha for a mosaic scan
+    2021-09-28 19:43:42,261 - mosaic file sorted
+    2021-09-28 19:43:42,262 - x0y0: x = -3.800300; y = 15.000000, file name = /local/data/2021-09/Pasha/mosaic_test_001.h5, original file name = /local/data/2021-09/Pasha/mosaic_test_001.h5
+    2021-09-28 19:43:42,262 - x1y0: x = -0.000300; y = 15.000000, file name = /local/data/2021-09/Pasha/mosaic_test_002.h5, original file name = /local/data/2021-09/Pasha/mosaic_test_002.h5
+    2021-09-28 19:43:42,263 - x2y0: x = 3.799700; y = 15.000000, file name = /local/data/2021-09/Pasha/mosaic_test_003.h5, original file name = /local/data/2021-09/Pasha/mosaic_test_003.h5
+    2021-09-28 19:43:42,263 - x0y1: x = -3.800300; y = 16.400000, file name = /local/data/2021-09/Pasha/mosaic_test_004.h5, original file name = /local/data/2021-09/Pasha/mosaic_test_004.h5
+    2021-09-28 19:43:42,263 - x1y1: x = -0.000300; y = 16.400000, file name = /local/data/2021-09/Pasha/mosaic_test_005.h5, original file name = /local/data/2021-09/Pasha/mosaic_test_005.h5
+    2021-09-28 19:43:42,263 - x2y1: x = 3.799700; y = 16.400000, file name = /local/data/2021-09/Pasha/mosaic_test_006.h5, original file name = /local/data/2021-09/Pasha/mosaic_test_006.h5
+    2021-09-28 19:43:42,263 - x0y2: x = -3.800300; y = 17.800000, file name = /local/data/2021-09/Pasha/mosaic_test_007.h5, original file name = /local/data/2021-09/Pasha/mosaic_test_007.h5
+    2021-09-28 19:43:42,263 - x1y2: x = -0.000300; y = 17.800000, file name = /local/data/2021-09/Pasha/mosaic_test_008.h5, original file name = /local/data/2021-09/Pasha/mosaic_test_008.h5
+    2021-09-28 19:43:42,263 - x2y2: x = 3.799700; y = 17.800000, file name = /local/data/2021-09/Pasha/mosaic_test_009.h5, original file name = /local/data/2021-09/Pasha/mosaic_test_009.h5
+    2021-09-28 19:43:42,264 - mosaic shift (x, y) in pixels: (2202, 811)
+    2021-09-28 19:43:42,958 - image   size (x, y) in pixels: (2448, 900)
+    2021-09-28 19:43:42,967 - mosaic file name grid:
+                                                  x_0                                           x_1                                           x_2
+    y_0  /local/data/2021-09/Pasha/mosaic_test_001.h5  /local/data/2021-09/Pasha/mosaic_test_002.h5  /local/data/2021-09/Pasha/mosaic_test_003.h5
+    y_1  /local/data/2021-09/Pasha/mosaic_test_004.h5  /local/data/2021-09/Pasha/mosaic_test_005.h5  /local/data/2021-09/Pasha/mosaic_test_006.h5
+    y_2  /local/data/2021-09/Pasha/mosaic_test_007.h5  /local/data/2021-09/Pasha/mosaic_test_008.h5  /local/data/2021-09/Pasha/mosaic_test_009.h5

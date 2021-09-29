@@ -36,9 +36,13 @@ Usage
 
     Commands:
   
-    init         Create configuration file
-    status       Show the mosaic-cli status
-    extract      Extract all meta data needed to compose a mosaic dataset
+        init         Create configuration file
+        status       Show the mosaic-cli status
+        extract      Extract the mosaic tomography files
+        sort         Sort the mosaic tomography files according to their tile location
+        tile         Return the mosaic tiles
+        shift        testing shift
+
 
 ::
 
@@ -48,7 +52,7 @@ Usage
     $ mosaic status 
         Show the last used mosaic parameters
 
-    $ mosaic extract -h
+    $ mosaic shift -h
 
 Example
 -------

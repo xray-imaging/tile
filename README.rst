@@ -8,13 +8,13 @@ Installation
 ------------
 
 First, you must have `Conda <https://docs.conda.io/en/latest/miniconda.html>`_
-installed.
+installed and create a dedicated conda environment::
 
-Next install `tomopy  <https://tomopy.readthedocs.io/en/latest/install.html#installing-from-conda>`_
+     conda create -n mosaic
 
 and::
 
-    $ conda activate tomopy
+    $ conda activate mosaic
 
 then install the mosaic::
 
@@ -22,6 +22,21 @@ then install the mosaic::
     $ cd mosaic
     $ python setup.py install
 
+Dependencies
+------------
+
+- `dxchange <https://github.com/data-exchange/dxchange>`_ version > 0.1.6 
+- pandas => ``conda install pandas``
+- tabulate
+- numpy
+- pandas
+- h5py
+- scipy
+- tomopy
+- libopencv
+- opencv
+- py-opencv
+- tifffile  => ``pip install tifffile``
 
 Usage
 -----

@@ -5,7 +5,7 @@ import glob
 import math
 import argparse
 import numpy as np
-
+from itertools import islice
 from collections import OrderedDict
 
 from mosaic import log
@@ -65,3 +65,33 @@ def find_min_max(data):
         mmax[k] = e[end+1]
      
     return mmin, mmax
+
+
+def chunk(iterable, size):
+    it = iter(iterable)
+    item = list(islice(it, size))
+    while item:
+        yield np.array(item)
+        item = list(islice(it, size))
+
+# Print iterations progress
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Print New Line on Complete
+    if iteration == total: 
+        print()

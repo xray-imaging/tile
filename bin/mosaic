@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import dxchange
 import tomopy
+import h5py
 import matplotlib.pyplot as plt
 from matplotlib.colors import NoNorm
 
@@ -25,6 +26,7 @@ from mosaic import log
 from mosaic import config
 from mosaic import fileio
 from mosaic import mosaic 
+from mosaic import util
 
 def init(args):
     if not os.path.exists(str(args.config)):
@@ -108,10 +110,11 @@ def shift(args):
     np.save('/local/data/tmp/shifts_v.npy',shifts_v)
     return shifts_h, shifts_v
 
-def test_stitch(args):
+def stitch(args):
     
-    # number of projections to test stitching
-    nproj_to_stitch = 8
+    #VN:should come from command line
+    args.test = False # if test==True then 1 projection will be stitched and placed in /local/data/tmp/res_proj/r
+    args.chunk_size = 64 # number of projections for simultaneous processing
 
     # read shifts
     shifts_h = np.load('/local/data/tmp/shifts_h.npy')
@@ -128,44 +131,86 @@ def test_stitch(args):
     # retrieve sizes (could be optimized)
     _, grid, data_shape, _, _ = fileio.tile(args)
     [ntiles_v,ntiles_h] = grid.shape
+    proj0, flat0, dark0, theta0, _ = dxchange.read_dx(grid[0,0], proj=(0, 1))
+
+
+    proj_size = (ntiles_v*data_shape[1]-int(cshifts_v[-1].max()), 
+        (ntiles_h*data_shape[2]-int(cshifts_h[-1].max()))//4*4)#make the width divisible by 4 to work with binning 2 at least
     
-    # init output array    
-    proj = np.zeros([nproj_to_stitch,ntiles_v*data_shape[1]-int(cshifts_v[-1].max()),
-        ntiles_h*data_shape[2]-int(cshifts_h[-1].max())],dtype='float32')
+    # number of projections to test stitching
+    if(args.test==True):
+        nproj_to_stitch = 1
+        norm = np.zeros([nproj_to_stitch,*proj_size],dtype='float32')        
+    else:
+        nproj_to_stitch = data_shape[0]
 
-    # stitch several projections
-    for iy in range(ntiles_v):    
-        for ix in range(ntiles_h):
-            proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[iy,ix], proj=(0, data_shape[0], data_shape[0]//nproj_to_stitch))
-            norm0 = tomopy.normalize(proj0, flat0, dark0)
-            
-            # define range in x
-            st_x = int(np.round(proj.shape[2]-(ix+1)*data_shape[2]+cshifts_h[iy,ix]))
-            end_x = st_x+data_shape[2]            
-            r_x = np.arange(st_x,end_x)%proj.shape[2]
+    with h5py.File('/local/data/tmp/res.h5','w') as fid:
+        # init output arrays
+        proj = fid.create_dataset('/exchange/data', (nproj_to_stitch,*proj_size),dtype=proj0.dtype, chunks = (1,*proj_size))
+        flat = fid.create_dataset('/exchange/data_white', (flat0.shape[0],*proj_size),dtype=flat0.dtype, chunks = (1,*proj_size))
+        dark = fid.create_dataset('/exchange/data_dark', (dark0.shape[0],*proj_size),dtype=dark0.dtype, chunks = (1,*proj_size))
+        theta = fid.create_dataset('/exchange/theta', data = theta0/np.pi*180)
+        
+        # stitch projections by chunks
+        for ichunk in range(int(np.ceil(nproj_to_stitch/args.chunk_size))):
+            st_chunk = ichunk*args.chunk_size
+            end_chunk = min((ichunk+1)*args.chunk_size,nproj_to_stitch)
+            log.info('Processing projections: %d - %d' % (st_chunk, end_chunk))
+            for iy in range(ntiles_v):    
+                for ix in range(ntiles_h):
 
-            # define range in y
-            st_y = int(np.round(iy*data_shape[1]-cshifts_v[iy,ix]))
-            end_y = st_y+data_shape[1]            
-            r_y = np.arange(st_y,end_y)%proj.shape[1]
-            
-            # fill the array part
-            proj[:,r_y[:,None],r_x] = norm0
+                    # VN: no need to read flat and dark fields for each chunk, should we use h5py[].. instead?
+                    proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[iy,ix], proj=(st_chunk,end_chunk))
+                    
+                    # define index in x for proj (filling from the right side)
+                    st_x0 = int(np.round(proj.shape[2]-(ix+1)*data_shape[2]+cshifts_h[iy,ix]))
+                    end_x0 = st_x0+data_shape[2]            
+                    
+                    # define index in y for proj (filling from the top side)
+                    st_y0 = int(np.round(iy*data_shape[1]-cshifts_v[iy,ix]))
+                    end_y0 = st_y0+data_shape[1]            
+                    
+                    # crop to the proj size 
+                    st_y = max(st_y0,0)
+                    st_x = max(st_x0,0)
+                    end_y = min(end_y0,proj.shape[1])
+                    end_x = min(end_x0,proj.shape[2])
+                                        
+                    # define index in x for proj0
+                    st_x0 = st_x-st_x0
+                    end_x0 = proj0.shape[2]+end_x-end_x0
+                    
+                    # define index in x for proj0
+                    st_y0 = st_y-st_y0                    
+                    end_y0 = proj0.shape[1]+end_y-end_y0
+                    
+                    # fill array part
+                    proj[st_chunk:end_chunk,st_y:end_y,st_x:end_x] = proj0[:,st_y0:end_y0,st_x0:end_x0]
 
-            # plot lines arround borders (not necessary in future)
-            proj[:,min(max(st_y-16,0),proj.shape[1]-1),r_x]=0
-            proj[:,min(max(st_y+16,0),proj.shape[1]-1),r_x]=0
-            proj[:,min(max(end_y-16,0),proj.shape[1]-1),r_x]=0
-            proj[:,min(max(end_y+16,0),proj.shape[1]-1),r_x]=0
-            
-            proj[:,r_y[:,None],min(max(st_x-16,0),proj.shape[2]-1)]=0
-            proj[:,r_y[:,None],min(max(st_x+16,0),proj.shape[2]-1)]=0
-            proj[:,r_y[:,None],min(max(end_x-16,0),proj.shape[2]-1)]=0
-            proj[:,r_y[:,None],min(max(end_x+16,0),proj.shape[2]-1)]=0
-            
-            
-    dxchange.write_tiff_stack(proj,'/local/data/tmp/res_proj/r',overwrite=True)      
-    log.info('Results are saved to /local/data/tmp/res_proj/')
+                    if(ichunk==0): # flat and dark field can be filled once (VN: maybe we can move this code out of the loop)
+                        flat[:,st_y:end_y,st_x:end_x] = flat0[:,st_y0:end_y0,st_x0:end_x0]
+                        dark[:,st_y:end_y,st_x:end_x] = dark0[:,st_y0:end_y0,st_x0:end_x0]
+                    
+                    if(args.test==True):                
+                        # fill the normalized array part
+                        norm[st_chunk:end_chunk,st_y:end_y,st_x:end_x] = tomopy.normalize(proj0[st_chunk:end_chunk,st_y0:end_y0,st_x0:end_x0], 
+                            flat0[:,st_y0:end_y0,st_x0:end_x0], dark0[:,st_y0:end_y0,st_x0:end_x0])                
+                        # plot lines arround borders (not necessary in future)
+                        norm[st_chunk:end_chunk,min(max(st_y-16,0),proj.shape[1]-1),st_x:end_x]=0
+                        norm[st_chunk:end_chunk,min(max(st_y+16,0),proj.shape[1]-1),st_x:end_x]=0
+                        norm[st_chunk:end_chunk,min(max(end_y-16,0),proj.shape[1]-1),st_x:end_x]=0
+                        norm[st_chunk:end_chunk,min(max(end_y+16,0),proj.shape[1]-1),st_x:end_x]=0
+                        
+                        norm[st_chunk:end_chunk,st_y:end_y,min(max(st_x-16,0),proj.shape[2]-1)]=0
+                        norm[st_chunk:end_chunk,st_y:end_y,min(max(st_x+16,0),proj.shape[2]-1)]=0
+                        norm[st_chunk:end_chunk,st_y:end_y,min(max(end_x-16,0),proj.shape[2]-1)]=0
+                        norm[st_chunk:end_chunk,st_y:end_y,min(max(end_x+16,0),proj.shape[2]-1)]=0
+
+    log.info('Stitched h5 file is saved as /local/data/tmp/res.h5')
+    if(args.test==True):
+        dxchange.write_tiff_stack(norm,'/local/data/tmp/res_proj/r',overwrite=True)      
+        log.info('Test results are saved to /local/data/tmp/res_proj/')
+
 # def stitch(args):  
 #     # load shifts
 #     # frame = pd.read_csv()
@@ -215,7 +260,8 @@ def main():
     sort_params     = config.MOSAIC_PARAMS
     tile_params     = config.MOSAIC_PARAMS
     shift_params    = config.MOSAIC_PARAMS
-    stitch_params    = config.MOSAIC_PARAMS
+    test_stitch_params    = config.MOSAIC_PARAMS
+    stitch_params   = config.MOSAIC_PARAMS
 
     cmd_parsers = [
         ('init',        init,           (),                 "Create configuration file"),
@@ -224,7 +270,7 @@ def main():
         ('sort',        sort,           sort_params,        "Sort the mosaic tomography files according to their tile location"),
         ('tile',        tile,           tile_params,        "Return the mosaic tiles"),
         ('shift',       shift,          shift_params,       "testing shift"),
-        ('stitch',      stitch,         stitch_params,      "testing stitch"),
+        ('stitch',      stitch,         stitch_params,      "stitch all data"),
     ]
 
     subparsers = parser.add_subparsers(title="Commands", metavar='')

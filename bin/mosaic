@@ -46,7 +46,7 @@ def sort(args):
         log.info("%s, %s, %s. Original file name: %s", k, meta_dict[k]['sample_x'], meta_dict[k]['sample_y'], meta_dict[k]['full_file_name'][0])
 
 def tile(args):
-    tile_dict, grid, x_shift, y_shift = fileio.tile(args)
+    tile_dict, grid, data_shape, x_shift, y_shift = fileio.tile(args)
     proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[0,0], proj=(0, 10))
     log.info('image   size (x, y) in pixels: (%d, %d)' % (proj0.shape[2], proj0.shape[1]))
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
@@ -56,25 +56,156 @@ def tile(args):
     log.info('mosaic file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
 
 def shift(args):
-    tile_dict, grid, x_shift, y_shift = fileio.tile(args)
+
+    # read files grid and retrieve data sizes
+    tile_dict, grid, data_shape, x_shift, y_shift = fileio.tile(args)
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
 
     columns = [f'x_{num}' for num in range(grid.shape[0])]
     index = [f'y_{num}' for num in range(grid.shape[0])]
+    
+    [ntiles_h,ntiles_v] = grid.shape
 
-    proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[0,0], proj=(0, 10))
-    proj1, flat1, dark1, _, _ = dxchange.read_dx(grid[0,1], proj=(0, 10))
-    norm0 = tomopy.normalize(proj0, flat0, dark0)
-    norm1 = tomopy.normalize(proj1, flat1, dark1)
-    log.info('image   size (x, y) in pixels: (%d, %d)' % (norm0.shape[2], norm0.shape[1]))
-    log.info('mosaic file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
+    # threshold for selecting matching features. It is given in range (0..1): higher value yields more matching features, 
+    #lower value yields less matching features but more accurate
+    threshold = 0.4
 
-    plt.imshow(norm0[0,:,:],cmap='nipy_spectral',norm=NoNorm())
-    plt.show()    
-    plt.imshow(norm1[0,:,:],cmap='nipy_spectral',norm=NoNorm())
-    plt.show()
-    # print(norm0.shape)
-    # mosaic.register_shift_sift(norm0, norm1)
+    # find shifts in horizontal direction
+    shifts_h = np.zeros([ntiles_v,ntiles_h,2], dtype=np.float32)    
+    for iy in range(ntiles_v):    
+        for ix in range(ntiles_h-1):
+            proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[iy,ix], proj=(0, data_shape[0], data_shape[0]//8))
+            proj1, flat1, dark1, _, _ = dxchange.read_dx(grid[iy,ix+1], proj=(0, data_shape[0], data_shape[0]//8))
+            norm0 = tomopy.normalize(proj0, flat0, dark0)
+            norm1 = tomopy.normalize(proj1, flat1, dark1)
+            wx = int((norm0.shape[2] - x_shift)*1)
+            shift = mosaic.register_shift_sift(norm1[:,:,-wx:], norm0[:,:,:wx],threshold)
+            shift = shift[~np.isnan(shift[:,0])]
+            shifts_h[iy,ix+1] = [np.median(shift[:,0]),np.median(wx-shift[:,1])]            
+    
+    # find shifts in vertical direction
+    shifts_v = np.zeros([ntiles_v,ntiles_h,2], dtype=np.float32)    
+    for ix in range(ntiles_h):
+        for iy in range(ntiles_v-1):            
+            proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[iy,ix], proj=(0, data_shape[0], data_shape[0]//8))
+            proj1, flat1, dark1, _, _ = dxchange.read_dx(grid[iy+1,ix], proj=(0, data_shape[0], data_shape[0]//8))
+            norm0 = tomopy.normalize(proj0, flat0, dark0)
+            norm1 = tomopy.normalize(proj1, flat1, dark1)
+            wy = int((norm0.shape[1] - y_shift)*1)
+            shift = mosaic.register_shift_sift(norm0[:,-wy:,:], norm1[:,:wy,:],threshold)
+            shift = shift[~np.isnan(shift[:,0])]
+            shifts_v[iy+1,ix] = [np.median(wy-shift[:,0]),np.median(shift[:,1])]
+
+    log.info('Horizontal shifts')
+    log.info(shifts_h)
+    log.info('Vertical shifts')
+    log.info(shifts_v)
+
+    # save shifts
+    # VN:we can try to save them as txt or csv instead to be able to change manually at any time
+    log.info('save shifts as npy')
+    np.save('/local/data/tmp/shifts_h.npy',shifts_h)
+    np.save('/local/data/tmp/shifts_v.npy',shifts_v)
+    return shifts_h, shifts_v
+
+def test_stitch(args):
+    
+    # number of projections to test stitching
+    nproj_to_stitch = 8
+
+    # read shifts
+    shifts_h = np.load('/local/data/tmp/shifts_h.npy')
+    shifts_v = np.load('/local/data/tmp/shifts_v.npy')
+    
+    # compute cumulative shifts
+    cshifts_h = shifts_h[:,:,1]
+    cshifts_v = shifts_v[:,:,0]
+    cshifts_h[:,0] = np.cumsum(shifts_h[:,0,1]+shifts_v[:,0,1])
+    cshifts_v[0,:] = np.cumsum(shifts_h[0,:,0]+shifts_v[0,:,0])
+    cshifts_h = np.cumsum(cshifts_h,axis=1)
+    cshifts_v = np.cumsum(cshifts_v,axis=0)
+
+    # retrieve sizes (could be optimized)
+    _, grid, data_shape, _, _ = fileio.tile(args)
+    [ntiles_v,ntiles_h] = grid.shape
+    
+    # init output array    
+    proj = np.zeros([nproj_to_stitch,ntiles_v*data_shape[1]-int(cshifts_v[-1].max()),
+        ntiles_h*data_shape[2]-int(cshifts_h[-1].max())],dtype='float32')
+
+    # stitch several projections
+    for iy in range(ntiles_v):    
+        for ix in range(ntiles_h):
+            proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[iy,ix], proj=(0, data_shape[0], data_shape[0]//nproj_to_stitch))
+            norm0 = tomopy.normalize(proj0, flat0, dark0)
+            
+            # define range in x
+            st_x = int(np.round(proj.shape[2]-(ix+1)*data_shape[2]+cshifts_h[iy,ix]))
+            end_x = st_x+data_shape[2]            
+            r_x = np.arange(st_x,end_x)%proj.shape[2]
+
+            # define range in y
+            st_y = int(np.round(iy*data_shape[1]-cshifts_v[iy,ix]))
+            end_y = st_y+data_shape[1]            
+            r_y = np.arange(st_y,end_y)%proj.shape[1]
+            
+            # fill the array part
+            proj[:,r_y[:,None],r_x] = norm0
+
+            # plot lines arround borders (not necessary in future)
+            proj[:,min(max(st_y-16,0),proj.shape[1]-1),r_x]=0
+            proj[:,min(max(st_y+16,0),proj.shape[1]-1),r_x]=0
+            proj[:,min(max(end_y-16,0),proj.shape[1]-1),r_x]=0
+            proj[:,min(max(end_y+16,0),proj.shape[1]-1),r_x]=0
+            
+            proj[:,r_y[:,None],min(max(st_x-16,0),proj.shape[2]-1)]=0
+            proj[:,r_y[:,None],min(max(st_x+16,0),proj.shape[2]-1)]=0
+            proj[:,r_y[:,None],min(max(end_x-16,0),proj.shape[2]-1)]=0
+            proj[:,r_y[:,None],min(max(end_x+16,0),proj.shape[2]-1)]=0
+            
+            
+    dxchange.write_tiff_stack(proj,'/local/data/tmp/res_proj/r',overwrite=True)      
+    log.info('Results are saved to /local/data/tmp/res_proj/')
+# def stitch(args):  
+#     # load shifts
+#     # frame = pd.read_csv()
+#     shifts_v = np.load('shifts_v.npy')
+#     # read some data to retrieve sizes
+#     tile_dict, grid, data_shape, x_shift, y_shift = fileio.tile(args)
+#     ntiles_h = grid.shape[1]
+#     proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[0,0], sino=(0,1))               
+    
+#     # resulting stitched arrays
+#     proj = np.zeros([data_shape[0],1,ntiles_h*data_shape[2]-np.sum(shifts_h[:,0])],dtype=proj0.dtype)
+#     flat = np.zeros([flat0.shape[0],1,ntiles_h*data_shape[2]-np.sum(shifts_h[:,0])],dtype=flat0.dtype)
+#     dark = np.zeros([dark0.shape[0],1,ntiles_h*data_shape[2]-np.sum(shifts_h[:,0])],dtype=dark0.dtype)
+
+#     shifts_h = np.cumsum(np.pad(shifts_h,((1,0),(0,0)),'constant'),axis=0)
+#     print(f'{shifts_h=}')
+#     for ix in range(ntiles_h):
+#         # fill array with overlapping in the following way
+#         # proj[end-n:end] = proj0
+#         # proj[end-2*n+shift0:end-n+shift0] = proj1
+#         # proj[end-3*n+shift1:end-2*n+shift1] = proj2
+#         proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[0,ix], sino=(data_shape[1]//2-shifts_h[ix,1],data_shape[1]//2-shifts_h[ix,1]+1))#VN: looks like grid is filled from right to left!
+#         st = proj.shape[2]-(ix+1)*data_shape[2]+shifts_h[ix,0]
+#         end = st+data_shape[2]
+#         print(st,end)
+#         proj[:,:,st:end] = proj0
+#         flat[:,:,st:end] = flat0
+#         dark[:,:,st:end] = dark0
+    
+    
+#     dxchange.write_tiff(proj[:,0],'/local/data/tmp/proj',overwrite=True)
+#     dxchange.write_tiff(flat[:,0],'/local/data/tmp/flat',overwrite=True)
+#     dxchange.write_tiff(dark[:,0],'/local/data/tmp/dark',overwrite=True)
+
+#     # for checking
+#     fproj = (proj-np.mean(dark,axis=0))/(np.mean(flat,axis=0)-np.mean(dark,axis=0)+1e-3)
+#     print(f'{fproj.shape=}')
+#     dxchange.write_tiff(fproj[:,0].astype('float32'),'/local/data/tmp/fproj',overwrite=True)
+
+
 
 def main():   
     parser = argparse.ArgumentParser()
@@ -84,6 +215,7 @@ def main():
     sort_params     = config.MOSAIC_PARAMS
     tile_params     = config.MOSAIC_PARAMS
     shift_params    = config.MOSAIC_PARAMS
+    stitch_params    = config.MOSAIC_PARAMS
 
     cmd_parsers = [
         ('init',        init,           (),                 "Create configuration file"),
@@ -92,6 +224,7 @@ def main():
         ('sort',        sort,           sort_params,        "Sort the mosaic tomography files according to their tile location"),
         ('tile',        tile,           tile_params,        "Return the mosaic tiles"),
         ('shift',       shift,          shift_params,       "testing shift"),
+        ('stitch',      stitch,         stitch_params,      "testing stitch"),
     ]
 
     subparsers = parser.add_subparsers(title="Commands", metavar='')

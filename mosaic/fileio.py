@@ -2,6 +2,7 @@ import os
 import re
 import numpy as np
 import dxchange.reader as dxreader
+import dxchange
 
 from pathlib import Path
 
@@ -131,4 +132,6 @@ def tile(args):
         grid[ind_list[k_file, 1], ind_list[k_file, 0]] = v
         k_file = k_file + 1 
 
-    return tile_dict, grid, x_shift, y_shift
+    proj0, flat0, dark0, theta0, _ = dxchange.read_dx(grid[0,0], proj=(0, 1))
+    data_shape = [len(theta0),*proj0.shape[1:]]
+    return tile_dict, grid, data_shape, x_shift, y_shift

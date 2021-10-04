@@ -72,6 +72,9 @@ Usage
 Example
 -------
 
+Using a `Foam dataset <https://tomobank.readthedocs.io/en/latest/source/data/docs.data.tomosaic.html#foam>`_  
+from `tomobank <https://tomobank.readthedocs.io/en/latest/index.html>`_:
+
 ::
 
     $ mosaic tile --file-name /local/data/2021-09/mosaic_data_folder/
@@ -105,3 +108,25 @@ Return a numpy array containing the tile filename::
     y_0  /local/data/2021-09/Pasha/mosaic_test_001.h5  /local/data/2021-09/Pasha/mosaic_test_002.h5  /local/data/2021-09/Pasha/mosaic_test_003.h5
     y_1  /local/data/2021-09/Pasha/mosaic_test_004.h5  /local/data/2021-09/Pasha/mosaic_test_005.h5  /local/data/2021-09/Pasha/mosaic_test_006.h5
     y_2  /local/data/2021-09/Pasha/mosaic_test_007.h5  /local/data/2021-09/Pasha/mosaic_test_008.h5  /local/data/2021-09/Pasha/mosaic_test_009.h5
+
+
+
+To find the actual shifs using features in the image::
+
+    $ mosaic shift --file-name /local/data/2021-09/mosaic_data_folder/
+
+To create a single sinogram to perform a test reconstruction run::
+
+    $ mosaic stitch --file-name /local/data/2021-09/mosaic_data_folder/ --test
+
+to generate:
+
+.. image:: docs/source/img/tomo_00094.png
+    :width: 50%
+    :align: center
+
+and 
+
+.. image:: docs/source/img/tomo_00094_rec.png
+    :width: 50%
+    :align: center

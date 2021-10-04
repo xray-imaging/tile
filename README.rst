@@ -72,6 +72,9 @@ Usage
 Example
 -------
 
+Using a `Foam dataset <https://tomobank.readthedocs.io/en/latest/source/data/docs.data.tomosaic.html#foam>`_  
+from `tomobank <https://tomobank.readthedocs.io/en/latest/index.html>`_:
+
 ::
 
     $ mosaic tile --file-name /local/data/2021-09/mosaic_data_folder/

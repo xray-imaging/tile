@@ -9,11 +9,12 @@ from pathlib import Path
 from mosaic import log
 
 KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
+SHIFTS_FILE_HEADER = '# Array shape: '
 
 def write_array(fname, arr):
       
     # Write the array to disk
-    header = '# Array shape: '
+    header = SHIFTS_FILE_HEADER
     with open(fname, 'w') as outfile:
         outfile.write(header + '{0}\n'.format(arr.shape))
         for data_slice in arr:
@@ -26,7 +27,7 @@ def read_array(fname):
     with open(fname) as f:
         firstline = f.readlines()[0].rstrip()
 
-    header = '# Array shape: '
+    header = SHIFTS_FILE_HEADER
     fshape = firstline[len(header):]
     fshape = fshape.replace('(','').replace(')','')  
     shape = tuple(map(int, fshape.split(', ')))

@@ -13,8 +13,9 @@ KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 def write_array(fname, arr):
       
     # Write the array to disk
+    header = '# Array shape: '
     with open(fname, 'w') as outfile:
-        outfile.write('# Array shape: {0}\n'.format(arr.shape))
+        outfile.write(header + '{0}\n'.format(arr.shape))
         for data_slice in arr:
             np.savetxt(outfile, data_slice, fmt='%-7.2f')
             # Writing out a break to indicate different slices...
@@ -25,7 +26,8 @@ def read_array(fname):
     with open(fname) as f:
         firstline = f.readlines()[0].rstrip()
 
-    fshape = firstline[15:]
+    header = '# Array shape: '
+    fshape = firstline[len(header):]
     fshape = fshape.replace('(','').replace(')','')  
     shape = tuple(map(int, fshape.split(', ')))
 

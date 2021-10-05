@@ -10,6 +10,30 @@ from mosaic import log
 
 KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 
+def write_array(fname, arr):
+      
+    # Write the array to disk
+    with open(fname, 'w') as outfile:
+        outfile.write('# Array shape: {0}\n'.format(arr.shape))
+        for data_slice in arr:
+            np.savetxt(outfile, data_slice, fmt='%-7.2f')
+            # Writing out a break to indicate different slices...
+            outfile.write('# New slice\n')
+
+def read_array(fname):
+
+    with open(fname) as f:
+        firstline = f.readlines()[0].rstrip()
+
+    fshape = firstline[15:]
+    fshape = fshape.replace('(','').replace(')','')  
+    shape = tuple(map(int, fshape.split(', ')))
+
+    # Read the array from disk
+    new_data = np.loadtxt(fname)
+    new_data = new_data.reshape(shape)
+    return new_data
+
 def extract_meta(fname):
 
     # list_to_extract = ('sample_x', 'sample_y', 'experimenter_name', 'full_file_name',  'sample_in_x', 'sample_in_y', 'proposal', 'sample_name', 'sample_y', 'camera_objective', 'resolution', 'energy', 'camera_distance', 'exposure_time', 'num_angles', 'scintillator_type', 'model')
@@ -91,9 +115,10 @@ def tile(args):
     y_start = y_sorted[first_key]['sample_y'][0] - 1 
 
     x_shift = int((1000*(x_sorted[second_key]['sample_x'][0]- x_sorted[first_key]['sample_x'][0]))/y_sorted[first_key]['resolution'][0])
-
+    y_shift = 0
+    
     tile_dict = {}
-
+    
     for k, v in y_sorted.items():
 
         if meta_dict[k]['sample_x'][0] > x_start:

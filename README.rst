@@ -136,6 +136,7 @@ Typical Workflow
 
 ::
 
+        $ mosaic tile   --file-name /local/data/2021-06/Kaoumi/10_bottom/
 	$ mosaic shift  --file-name /local/data/2021-06/Kaoumi/10_bottom/
 	$ mosaic stitch --file-name /local/data/2021-06/Kaoumi/10_bottom/ --test
 	$ mosaic stitch --file-name /local/data/2021-06/Kaoumi/10_bottom/

@@ -53,25 +53,23 @@ def tile(args):
     log.info('image   size (x, y) in pixels: (%d, %d)' % (proj0.shape[2], proj0.shape[1]))
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
 
-    columns = [f'x_{num}' for num in range(grid.shape[0])]
-    index = [f'y_{num}' for num in range(grid.shape[1])]
+    index = [f'x_{num}' for num in range(grid.shape[0])]
+    columns = [f'y_{num}' for num in range(grid.shape[1])]
     log.info('mosaic file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
 
 def shift(args):
 
     # read files grid and retrieve data sizes
     tile_dict, grid, data_shape, x_shift, y_shift = fileio.tile(args)
+
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
 
     columns = [f'x_{num}' for num in range(grid.shape[0])]
     index = [f'y_{num}' for num in range(grid.shape[0])]
     
-    [ntiles_h,ntiles_v] = grid.shape
+    [ntiles_v,ntiles_h] = grid.shape
 
-    # threshold for selecting matching features. It is given in range (0..1): higher value yields more matching features, 
-    #lower value yields less matching features but more accurate
-    threshold = 0.4
-
+    multipliers = np.ones([ntiles_v,ntiles_h], dtype=np.float32)      
     # find shifts in horizontal direction
     shifts_h = np.zeros([ntiles_v,ntiles_h,2], dtype=np.float32)    
     for iy in range(ntiles_v):    
@@ -81,11 +79,18 @@ def shift(args):
             norm0 = tomopy.normalize(proj0, flat0, dark0)
             norm1 = tomopy.normalize(proj1, flat1, dark1)
             wx = int((norm0.shape[2] - x_shift)*1)
-            shift = mosaic.register_shift_sift(norm1[:,:,-wx:], norm0[:,:,:wx],threshold)
+            shift = mosaic.register_shift_sift(norm1[:,:,-wx:], norm0[:,:,:wx],args.threshold)
+
             shift = shift[~np.isnan(shift[:,0])]
+            if (len(shift)==0):
+                shift = np.array([[0,0]])
             shifts_h[iy,ix+1] = [np.median(shift[:,0]),np.median(wx-shift[:,1])]            
+            #VN: tmp for Kaoumi dataset
+            height = 350
+            multipliers[iy,ix+1] = 1/(np.linalg.norm(norm1[:,data_shape[1]//2-height:data_shape[1]//2+height,-wx:])/np.linalg.norm(norm0[:,data_shape[1]//2-height:data_shape[1]//2+height,:wx]))
+            print(multipliers)
     
-    # find shifts in vertical direction
+    # find shifts in vertical direction    
     shifts_v = np.zeros([ntiles_v,ntiles_h,2], dtype=np.float32)    
     for ix in range(ntiles_h):
         for iy in range(ntiles_v-1):            
@@ -94,10 +99,12 @@ def shift(args):
             norm0 = tomopy.normalize(proj0, flat0, dark0)
             norm1 = tomopy.normalize(proj1, flat1, dark1)
             wy = int((norm0.shape[1] - y_shift)*1)
-            shift = mosaic.register_shift_sift(norm0[:,-wy:,:], norm1[:,:wy,:],threshold)
+            shift = mosaic.register_shift_sift(norm0[:,-wy:,:], norm1[:,:wy,:],args.threshold)
             shift = shift[~np.isnan(shift[:,0])]
+            if (len(shift)==0):
+                shift = np.array([[0,0]])
             shifts_v[iy+1,ix] = [np.median(wy-shift[:,0]),np.median(shift[:,1])]
-
+            #multipliers[iy+1,ix] = np.linalg.norm(norm0[:,-wy:,:])/np.linalg.norm(norm1[:,:wy,:])
     log.info('Horizontal shifts')
     log.info(shifts_h)
     log.info('Vertical shifts')
@@ -105,21 +112,37 @@ def shift(args):
 
     # save shifts
     # VN:we can try to save them as txt or csv instead to be able to change manually at any time
-    log.info('save shifts as npy')
+    # log.info('save shifts as npy')
     np.save('/local/data/tmp/shifts_h.npy',shifts_h)
     np.save('/local/data/tmp/shifts_v.npy',shifts_v)
+    np.save('/local/data/tmp/multipliers.npy',multipliers)
+
+    # reshaping the array from 3D matrice to 2D matrice.
+    # fileio.write_array(args.shifts_h, shifts_h)
+    # fileio.write_array(args.shifts_v, shifts_v)
+
     return shifts_h, shifts_v
 
 def stitch(args):
     
     #VN:should come from command line
-    args.test = False # if test==True then 1 projection will be stitched and placed in /local/data/tmp/res_proj/r
-    args.chunk_size = 64 # number of projections for simultaneous processing
+    # args.test = False # if test==True then 1 projection will be stitched and placed in /local/data/tmp/res_proj/r
+    # args.chunk_size = 64 # number of projections for simultaneous processing
 
     # read shifts
     shifts_h = np.load('/local/data/tmp/shifts_h.npy')
     shifts_v = np.load('/local/data/tmp/shifts_v.npy')
-    
+    multipliers = np.load('/local/data/tmp/multipliers.npy')#*0+1
+
+    #VN: For Kaoumi dataset shift is 230 and not 213
+    #VN: we can organize some 'try' procedure for manual shift tuning..
+    #VN: projection id to test shift should be in args
+    shifts_h[np.abs((shifts_h-213))<1e-3]=230
+
+    # read shifts
+    # shifts_h = fileio.read_array(args.shifts_h)
+    # shifts_v = fileio.read_array(args.shifts_v)
+
     # compute cumulative shifts
     cshifts_h = shifts_h[:,:,1]
     cshifts_v = shifts_v[:,:,0]
@@ -127,7 +150,8 @@ def stitch(args):
     cshifts_v[0,:] = np.cumsum(shifts_h[0,:,0]+shifts_v[0,:,0])
     cshifts_h = np.cumsum(cshifts_h,axis=1)
     cshifts_v = np.cumsum(cshifts_v,axis=0)
-
+    cmultipliers = np.cumprod(multipliers,axis=1)
+    print(cmultipliers)
     # retrieve sizes (could be optimized)
     _, grid, data_shape, _, _ = fileio.tile(args)
     [ntiles_v,ntiles_h] = grid.shape
@@ -137,15 +161,19 @@ def stitch(args):
     proj_size = (ntiles_v*data_shape[1]-int(cshifts_v[-1].max()), 
         (ntiles_h*data_shape[2]-int(cshifts_h[-1].max()))//4*4)#make the width divisible by 4 to work with binning 2 at least
     
-    # number of projections to test stitching
+    
     if(args.test==True):
+        # number of projections to test stitching
         nproj_to_stitch = 1
+        # normalized array to be filled
         norm = np.zeros([nproj_to_stitch,*proj_size],dtype='float32')        
     else:
         nproj_to_stitch = data_shape[0]
 
-    with h5py.File('/local/data/tmp/res.h5','w') as fid:
+    mosaic_fname = os.path.join(args.file_name, 'tmp', 'mosaic.h5')
+    with h5py.File(mosaic_fname,'w') as fid:
         # init output arrays
+        #VN: add metadata with dxwriter
         proj = fid.create_dataset('/exchange/data', (nproj_to_stitch,*proj_size),dtype=proj0.dtype, chunks = (1,*proj_size))
         flat = fid.create_dataset('/exchange/data_white', (flat0.shape[0],*proj_size),dtype=flat0.dtype, chunks = (1,*proj_size))
         dark = fid.create_dataset('/exchange/data_dark', (dark0.shape[0],*proj_size),dtype=dark0.dtype, chunks = (1,*proj_size))
@@ -158,10 +186,13 @@ def stitch(args):
             log.info('Processing projections: %d - %d' % (st_chunk, end_chunk))
             for iy in range(ntiles_v):    
                 for ix in range(ntiles_h):
-
                     # VN: no need to read flat and dark fields for each chunk, should we use h5py[].. instead?
                     proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[iy,ix], proj=(st_chunk,end_chunk))
                     
+                    # VN: tmp for Kaoumi data
+                    proj0 = (np.float32(proj0)*cmultipliers[iy,ix]).astype(proj0.dtype)
+
+
                     # define index in x for proj (filling from the right side)
                     st_x0 = int(np.round(proj.shape[2]-(ix+1)*data_shape[2]+cshifts_h[iy,ix]))
                     end_x0 = st_x0+data_shape[2]            
@@ -206,49 +237,11 @@ def stitch(args):
                         norm[st_chunk:end_chunk,st_y:end_y,min(max(end_x-16,0),proj.shape[2]-1)]=0
                         norm[st_chunk:end_chunk,st_y:end_y,min(max(end_x+16,0),proj.shape[2]-1)]=0
 
-    log.info('Stitched h5 file is saved as /local/data/tmp/res.h5')
+    log.info('Stitched h5 file is saved as %s' % mosaic_fname)
     if(args.test==True):
-        dxchange.write_tiff_stack(norm,'/local/data/tmp/res_proj/r',overwrite=True)      
-        log.info('Test results are saved to /local/data/tmp/res_proj/')
-
-# def stitch(args):  
-#     # load shifts
-#     # frame = pd.read_csv()
-#     shifts_v = np.load('shifts_v.npy')
-#     # read some data to retrieve sizes
-#     tile_dict, grid, data_shape, x_shift, y_shift = fileio.tile(args)
-#     ntiles_h = grid.shape[1]
-#     proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[0,0], sino=(0,1))               
-    
-#     # resulting stitched arrays
-#     proj = np.zeros([data_shape[0],1,ntiles_h*data_shape[2]-np.sum(shifts_h[:,0])],dtype=proj0.dtype)
-#     flat = np.zeros([flat0.shape[0],1,ntiles_h*data_shape[2]-np.sum(shifts_h[:,0])],dtype=flat0.dtype)
-#     dark = np.zeros([dark0.shape[0],1,ntiles_h*data_shape[2]-np.sum(shifts_h[:,0])],dtype=dark0.dtype)
-
-#     shifts_h = np.cumsum(np.pad(shifts_h,((1,0),(0,0)),'constant'),axis=0)
-#     print(f'{shifts_h=}')
-#     for ix in range(ntiles_h):
-#         # fill array with overlapping in the following way
-#         # proj[end-n:end] = proj0
-#         # proj[end-2*n+shift0:end-n+shift0] = proj1
-#         # proj[end-3*n+shift1:end-2*n+shift1] = proj2
-#         proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[0,ix], sino=(data_shape[1]//2-shifts_h[ix,1],data_shape[1]//2-shifts_h[ix,1]+1))#VN: looks like grid is filled from right to left!
-#         st = proj.shape[2]-(ix+1)*data_shape[2]+shifts_h[ix,0]
-#         end = st+data_shape[2]
-#         print(st,end)
-#         proj[:,:,st:end] = proj0
-#         flat[:,:,st:end] = flat0
-#         dark[:,:,st:end] = dark0
-    
-    
-#     dxchange.write_tiff(proj[:,0],'/local/data/tmp/proj',overwrite=True)
-#     dxchange.write_tiff(flat[:,0],'/local/data/tmp/flat',overwrite=True)
-#     dxchange.write_tiff(dark[:,0],'/local/data/tmp/dark',overwrite=True)
-
-#     # for checking
-#     fproj = (proj-np.mean(dark,axis=0))/(np.mean(flat,axis=0)-np.mean(dark,axis=0)+1e-3)
-#     print(f'{fproj.shape=}')
-#     dxchange.write_tiff(fproj[:,0].astype('float32'),'/local/data/tmp/fproj',overwrite=True)
+        mosaic_test_fname = os.path.join(args.file_name, 'tmp', 'projection')
+        dxchange.write_tiff_stack(norm, mosaic_test_fname,overwrite=True)
+        log.info('Test results are saved to %s' % mosaic_test_fname)
 
 
 
@@ -260,8 +253,7 @@ def main():
     sort_params     = config.MOSAIC_PARAMS
     tile_params     = config.MOSAIC_PARAMS
     shift_params    = config.MOSAIC_PARAMS
-    test_stitch_params    = config.MOSAIC_PARAMS
-    stitch_params   = config.MOSAIC_PARAMS
+    stitch_params   = config.STITCH_PARAMS
 
     cmd_parsers = [
         ('init',        init,           (),                 "Create configuration file"),

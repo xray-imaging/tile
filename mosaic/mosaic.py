@@ -10,18 +10,19 @@ import dxchange
 def register_shift_sift(datap1, datap2, threshold):
     """Find shifts via SIFT detecting features"""
 
-    mmin,mmax = util.find_min_max(datap1)
+    mmin1,mmax1 = util.find_min_max(datap1)
+    mmin2,mmax2 = util.find_min_max(datap2)
     #print('min *************', mmin)
     #print('max *************', mmax)
     # sift = cv2.xfeatures2d.SIFT_create()
     sift = cv2.SIFT_create()
     shifts = np.zeros([datap1.shape[0],2],dtype='float32')
     for id in range(datap1.shape[0]):       
-        tmp1 = ((datap1[id]-mmin[id]) / (mmax[id]-mmin[id])*255.)
+        tmp1 = ((datap1[id]-mmin1[id]) / (mmax1[id]-mmin1[id])*255.)
         tmp1[tmp1 > 255] = 255
         tmp1[tmp1 < 0] = 0
-        tmp2 = ((datap2[id]-mmin[id]) /
-                (mmax[id]-mmin[id])*255)
+        tmp2 = ((datap2[id]-mmin2[id]) /
+                (mmax2[id]-mmin2[id])*255)
         tmp2[tmp2 > 255] = 255
         tmp2[tmp2 < 0] = 0
         # find key points
@@ -30,8 +31,8 @@ def register_shift_sift(datap1, datap2, threshold):
 
         kp1, des1 = sift.detectAndCompute(tmp1,None)
         kp2, des2 = sift.detectAndCompute(tmp2,None)
-        # cv2.imwrite('original_image_right_keypoints.png',cv2.drawKeypoints(tmp1,kp1,None))
-        # cv2.imwrite('original_image_left_keypoints.png',cv2.drawKeypoints(tmp2,kp2,None))
+        cv2.imwrite('original_image_right_keypoints.png',cv2.drawKeypoints(tmp1,kp1,None))
+        cv2.imwrite('original_image_left_keypoints.png',cv2.drawKeypoints(tmp2,kp2,None))
         match = cv2.BFMatcher()
         matches = match.knnMatch(des1,des2,k=2)
         good = []

@@ -36,7 +36,7 @@ SECTIONS['general'] = {
         }
 
 SECTIONS['file-io'] = {
-    'file-name': {
+    'folder-name': {
         'default': '.',
         'type': Path,
         'help': "Name of the last used directory containing multiple hdf files",
@@ -55,16 +55,16 @@ SECTIONS['file-io'] = {
         'default': 0,
         'help': "Reconstruction binning factor as power(2, choice)",
         'choices': [0, 1, 2, 3]},
-    'shifts-h': {
-        'default': SHIFT_H_FILE_NAME,
-        'type': str,
-        'help': "File name storing the horizontal shifts",
-        'metavar': 'FILE'},
-    'shifts-v': {
-        'default': SHIFT_V_FILE_NAME,
-        'type': str,
-        'help': "File name storing the vertical shifts",
-        'metavar': 'FILE'},
+    # 'shifts-h': {
+    #     'default': SHIFT_H_FILE_NAME,
+    #     'type': str,
+    #     'help': "File name storing the horizontal shifts",
+    #     'metavar': 'FILE'},
+    # 'shifts-v': {
+    #     'default': SHIFT_V_FILE_NAME,
+    #     'type': str,
+    #     'help': "File name storing the vertical shifts",
+    #     'metavar': 'FILE'},
     'chunk-size': {     
         'type': int,
         'default': 64,

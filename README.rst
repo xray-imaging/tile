@@ -77,7 +77,7 @@ from `tomobank <https://tomobank.readthedocs.io/en/latest/index.html>`_:
 
 ::
 
-    $ mosaic tile --file-name /local/data/2021-09/mosaic_data_folder/
+    $ mosaic tile --folder-name /local/data/2021-09/mosaic_data_folder/
 
 Return a numpy array containing the tile filename::
 
@@ -113,11 +113,11 @@ Return a numpy array containing the tile filename::
 
 To find the actual shifs using features in the image::
 
-    $ mosaic shift --file-name /local/data/2021-09/mosaic_data_folder/
+    $ mosaic shift --folder-name /local/data/2021-09/mosaic_data_folder/
 
 To create a single sinogram to perform a test reconstruction run::
 
-    $ mosaic stitch --file-name /local/data/2021-09/mosaic_data_folder/ --test
+    $ mosaic stitch --folder-name /local/data/2021-09/mosaic_data_folder/ --test
 
 to generate:
 
@@ -136,9 +136,9 @@ Typical Workflow
 
 ::
 
-        $ mosaic tile   --file-name /local/data/2021-06/Kaoumi/10_bottom/
-	$ mosaic shift  --file-name /local/data/2021-06/Kaoumi/10_bottom/
-	$ mosaic stitch --file-name /local/data/2021-06/Kaoumi/10_bottom/ --test
-	$ mosaic stitch --file-name /local/data/2021-06/Kaoumi/10_bottom/
-	$ tomopy recon  --file-name /local/data/2021-06/Kaoumi/10_bottom/tmp/mosaic.h5 --binning 2 --rotation-axis-auto manual --center-search-width 50 --rotation-axis 5653 --nsino-per-chunk 32 --reconstruction-type full --remove-stripe-method vo-all --fix-nan-and-inf True
+        $ mosaic tile   --folder-name /local/data/2021-06/Kaoumi/10_bottom/
+	$ mosaic shift  --folder-name /local/data/2021-06/Kaoumi/10_bottom/
+	$ mosaic stitch --folder-name /local/data/2021-06/Kaoumi/10_bottom/ --test
+	$ mosaic stitch --folder-name /local/data/2021-06/Kaoumi/10_bottom/
+	$ tomopy recon  --folder-name /local/data/2021-06/Kaoumi/10_bottom/tmp/mosaic.h5 --binning 2 --rotation-axis-auto manual --center-search-width 50 --rotation-axis 5653 --nsino-per-chunk 32 --reconstruction-type full --remove-stripe-method vo-all --fix-nan-and-inf True
 

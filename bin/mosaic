@@ -110,16 +110,19 @@ def shift(args):
     log.info('Vertical shifts')
     log.info(shifts_v)
 
+    shifts_h_fname, shifts_v_fname, multipliers_fname = fileio.service_fnames(args.mosaic_fname)
+
     # save shifts
     # VN:we can try to save them as txt or csv instead to be able to change manually at any time
     # log.info('save shifts as npy')
-    np.save('/local/data/tmp/shifts_h.npy',shifts_h)
-    np.save('/local/data/tmp/shifts_v.npy',shifts_v)
-    np.save('/local/data/tmp/multipliers.npy',multipliers)
+    np.save(shifts_h_fname, shifts_h)
+    np.save(shifts_v_fname, shifts_v)
+    np.save(multipliers_fname, multipliers)
 
     # reshaping the array from 3D matrice to 2D matrice.
-    # fileio.write_array(args.shifts_h, shifts_h)
-    # fileio.write_array(args.shifts_v, shifts_v)
+    # fileio.write_array(shifts_h_fname, shifts_h)
+    # fileio.write_array(shifts_h_fname, shifts_v)
+    # fileio.write_array(multipliers_fname, multipliers)
 
     return shifts_h, shifts_v
 
@@ -129,10 +132,12 @@ def stitch(args):
     # args.test = False # if test==True then 1 projection will be stitched and placed in /local/data/tmp/res_proj/r
     # args.chunk_size = 64 # number of projections for simultaneous processing
 
+    shifts_h_fname, shifts_v_fname, multipliers_fname = fileio.service_fnames(args.mosaic_fname)
+
     # read shifts
-    shifts_h = np.load('/local/data/tmp/shifts_h.npy')
-    shifts_v = np.load('/local/data/tmp/shifts_v.npy')
-    multipliers = np.load('/local/data/tmp/multipliers.npy')#*0+1
+    shifts_h = np.load(shifts_h_fname)
+    shifts_v = np.load(shifts_h_fname)
+    multipliers = np.load(multipliers_fname)#*0+1
 
     #VN: For Kaoumi dataset shift is 230 and not 213
     #VN: we can organize some 'try' procedure for manual shift tuning..
@@ -140,8 +145,8 @@ def stitch(args):
     shifts_h[np.abs((shifts_h-213))<1e-3]=230
 
     # read shifts
-    # shifts_h = fileio.read_array(args.shifts_h)
-    # shifts_v = fileio.read_array(args.shifts_v)
+    # shifts_h = fileio.read_array(shifts_h_fname)
+    # shifts_v = fileio.read_array(shifts_v_fname)
 
     # compute cumulative shifts
     cshifts_h = shifts_h[:,:,1]
@@ -170,8 +175,8 @@ def stitch(args):
     else:
         nproj_to_stitch = data_shape[0]
 
-    mosaic_fname = os.path.join(args.file_name, 'tmp', 'mosaic.h5')
-    with h5py.File(mosaic_fname,'w') as fid:
+    # mosaic_fname = os.path.join(args.folder_name, 'tmp', 'mosaic.h5')
+    with h5py.File(args.mosaic_fname,'w') as fid:
         # init output arrays
         #VN: add metadata with dxwriter
         proj = fid.create_dataset('/exchange/data', (nproj_to_stitch,*proj_size),dtype=proj0.dtype, chunks = (1,*proj_size))
@@ -237,9 +242,10 @@ def stitch(args):
                         norm[st_chunk:end_chunk,st_y:end_y,min(max(end_x-16,0),proj.shape[2]-1)]=0
                         norm[st_chunk:end_chunk,st_y:end_y,min(max(end_x+16,0),proj.shape[2]-1)]=0
 
-    log.info('Stitched h5 file is saved as %s' % mosaic_fname)
-    if(args.test==True):
-        mosaic_test_fname = os.path.join(args.file_name, 'tmp', 'projection')
+    log.info('Stitched h5 file is saved as %s' % args.mosaic_fname)
+    if(args.test==True): 
+        mosaic_folder = os.path.dirname(args.mosaic_fname)
+        mosaic_test_fname = os.path.join(mosaic_folder, 'projection')
         dxchange.write_tiff_stack(norm, mosaic_test_fname,overwrite=True)
         log.info('Test results are saved to %s' % mosaic_test_fname)
 
@@ -288,6 +294,12 @@ def main():
     log.debug("Started mosaic")
     log.warning('Saving log at %s' % lfname)
     
+    mosaic_home = os.path.join(args.folder_name, 'mosaic')
+    if not os.path.exists(mosaic_home):
+        os.makedirs(mosaic_home)    
+    
+    args.mosaic_fname = os.path.join(mosaic_home, 'mosaic.h5')
+
     try: 
         # load args from default (config.py) if not changed
         config.log_values(args)

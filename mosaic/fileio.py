@@ -13,11 +13,14 @@ SHIFTS_FILE_HEADER = '# Array shape: '
 
 
 def service_fnames(mosaic_fname):
-    
+
     mosaic_folder = os.path.dirname(mosaic_fname)
-    shifts_h_fname = os.path.join(mosaic_folder, 'shifts_h.npy')
-    shifts_v_fname = os.path.join(mosaic_folder, 'shifts_v.npy')
-    multipliers_fname = os.path.join(mosaic_folder, 'multipliers.npy')
+    # shifts_h_fname = os.path.join(mosaic_folder, 'shifts_h.npy')
+    # shifts_v_fname = os.path.join(mosaic_folder, 'shifts_v.npy')
+    # multipliers_fname = os.path.join(mosaic_folder, 'multipliers.npy')
+    shifts_h_fname = os.path.join(mosaic_folder, 'shifts_h.txt')
+    shifts_v_fname = os.path.join(mosaic_folder, 'shifts_v.txt')
+    multipliers_fname = os.path.join(mosaic_folder, 'multipliers.txt')
 
     return shifts_h_fname, shifts_v_fname, multipliers_fname
 
@@ -34,17 +37,23 @@ def write_array(fname, arr):
 
 def read_array(fname):
 
-    with open(fname) as f:
-        firstline = f.readlines()[0].rstrip()
+    new_data = None
+    try:
+        with open(fname) as f:
+            firstline = f.readlines()[0].rstrip()
 
-    header = SHIFTS_FILE_HEADER
-    fshape = firstline[len(header):]
-    fshape = fshape.replace('(','').replace(')','')  
-    shape = tuple(map(int, fshape.split(', ')))
+            header = SHIFTS_FILE_HEADER
+            fshape = firstline[len(header):]
+            fshape = fshape.replace('(','').replace(')','')  
+            shape = tuple(map(int, fshape.split(', ')))
 
-    # Read the array from disk
-    new_data = np.loadtxt(fname)
-    new_data = new_data.reshape(shape)
+            # Read the array from disk
+            new_data = np.loadtxt(fname)
+            new_data = new_data.reshape(shape)
+    except Exception as error: 
+        log.error("%s not found" % fname)
+        log.error("run -- $ mosaic shift -- first")
+        ##FDC shall we return an arrays with zeros? to handle vertial/horizontal scans?
     return new_data
 
 def extract_meta(fname):

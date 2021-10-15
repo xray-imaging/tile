@@ -115,14 +115,14 @@ def shift(args):
     # save shifts
     # VN:we can try to save them as txt or csv instead to be able to change manually at any time
     # log.info('save shifts as npy')
-    np.save(shifts_h_fname, shifts_h)
-    np.save(shifts_v_fname, shifts_v)
-    np.save(multipliers_fname, multipliers)
+    # np.save(shifts_h_fname, shifts_h)
+    # np.save(shifts_v_fname, shifts_v)
+    # np.save(multipliers_fname, multipliers)
 
     # reshaping the array from 3D matrice to 2D matrice.
-    # fileio.write_array(shifts_h_fname, shifts_h)
-    # fileio.write_array(shifts_h_fname, shifts_v)
-    # fileio.write_array(multipliers_fname, multipliers)
+    fileio.write_array(shifts_h_fname, shifts_h)
+    fileio.write_array(shifts_v_fname, shifts_v)
+    fileio.write_array(multipliers_fname, multipliers)
 
     return shifts_h, shifts_v
 
@@ -135,19 +135,21 @@ def stitch(args):
     shifts_h_fname, shifts_v_fname, multipliers_fname = fileio.service_fnames(args.mosaic_fname)
 
     # read shifts
-    shifts_h = np.load(shifts_h_fname)
-    shifts_v = np.load(shifts_h_fname)
-    multipliers = np.load(multipliers_fname)#*0+1
+    # shifts_h = np.load(shifts_h_fname)
+    # shifts_v = np.load(shifts_h_fname)
+    # multipliers = np.load(multipliers_fname)#*0+1
+
+    # read shifts
+    shifts_h    = fileio.read_array(shifts_h_fname)
+    shifts_v    = fileio.read_array(shifts_v_fname)
+    multipliers = fileio.read_array(multipliers_fname)
 
     #VN: For Kaoumi dataset shift is 230 and not 213
     #VN: we can organize some 'try' procedure for manual shift tuning..
     #VN: projection id to test shift should be in args
     shifts_h[np.abs((shifts_h-213))<1e-3]=230
 
-    # read shifts
-    # shifts_h = fileio.read_array(shifts_h_fname)
-    # shifts_v = fileio.read_array(shifts_v_fname)
-
+    #FDC: here we need to handle the case of h/v scan only
     # compute cumulative shifts
     cshifts_h = shifts_h[:,:,1]
     cshifts_v = shifts_v[:,:,0]

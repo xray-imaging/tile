@@ -136,9 +136,8 @@ Typical Workflow
 
 ::
 
-        $ mosaic tile   --folder-name /local/data/2021-06/Kaoumi/10_bottom/
-	$ mosaic shift  --folder-name /local/data/2021-06/Kaoumi/10_bottom/
-	$ mosaic stitch --folder-name /local/data/2021-06/Kaoumi/10_bottom/ --test
-	$ mosaic stitch --folder-name /local/data/2021-06/Kaoumi/10_bottom/
-	$ tomopy recon  --folder-name /local/data/2021-06/Kaoumi/10_bottom/tmp/mosaic.h5 --binning 2 --rotation-axis-auto manual --center-search-width 50 --rotation-axis 5653 --nsino-per-chunk 32 --reconstruction-type full --remove-stripe-method vo-all --fix-nan-and-inf True
-
+    $ mosaic tile    --folder-name /data/2021-06/Kaoumi/13_center/
+    $ mosaic shift   --folder-name /data/2021-06/Kaoumi/13_center/
+    $ mosaic stitch  --folder-name /data/2021-06/Kaoumi/13_center/
+    $ tomopy recon   --file-name /data/2021-06/Kaoumi/13_center/mosaic/mosaic.h5  --binning 2 --rotation-axis-auto manual --center-search-width 10 --rotation-axis 5653 --nsino-per-chunk 32 --reconstruction-type try --remove-stripe-method vo-all --fix-nan-and-inf True
+    $ tomopy recon   --file-name /data/2021-06/Kaoumi/13_center/mosaic/mosaic.h5  --binning 2 --rotation-axis-auto manual --center-search-width 10 --rotation-axis 5653 --nsino-per-chunk 32 --reconstruction-type full --remove-stripe-method vo-all --fix-nan-and-inf True

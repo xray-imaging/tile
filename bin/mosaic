@@ -52,6 +52,7 @@ def tile(args):
     proj0, flat0, dark0, _, _ = dxchange.read_dx(grid[0,0], proj=(0, 10))
     log.info('image   size (x, y) in pixels: (%d, %d)' % (proj0.shape[2], proj0.shape[1]))
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
+    log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (proj0.shape[2]-x_shift, proj0.shape[1]-y_shift))
 
     index = [f'x_{num}' for num in range(grid.shape[0])]
     columns = [f'y_{num}' for num in range(grid.shape[1])]
@@ -62,7 +63,9 @@ def shift(args):
     # read files grid and retrieve data sizes
     tile_dict, grid, data_shape, x_shift, y_shift = fileio.tile(args)
 
+    log.info('image   size (x, y) in pixels: (%d, %d)' % (data_shape[2], data_shape[1]))
     log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
+    log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
 
     columns = [f'x_{num}' for num in range(grid.shape[0])]
     index = [f'y_{num}' for num in range(grid.shape[0])]
@@ -148,8 +151,9 @@ def stitch(args):
     #VN: we can organize some 'try' procedure for manual shift tuning..
     #VN: projection id to test shift should be in args
     shifts_h[np.abs((shifts_h-213))<1e-3]=230
+    shifts_v[np.abs((shifts_h-77))<1e-3]=71
 
-    #FDC: here we need to handle the case of h/v scan only
+    #FDC: here we need to handle the case of h/v scan only (no tiles)
     # compute cumulative shifts
     cshifts_h = shifts_h[:,:,1]
     cshifts_v = shifts_v[:,:,0]

@@ -82,6 +82,10 @@ SECTIONS['stitch'] = {
         'default': False,
         'help': 'if set one projection called mosaic_test will be stitched and placed in raw data folded',
         'action': 'store_true'},
+    'proj': {     
+        'type': int,
+        'default': 0,
+        'help': "Projection used for the stitching test",},
        }
 
 MOSAIC_PARAMS = ('file-io', )

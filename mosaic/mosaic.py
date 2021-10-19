@@ -28,14 +28,24 @@ def register_shift_sift(datap1, datap2, threshold):
         # find key points
         tmp1 = tmp1.astype('uint8')
         tmp2 = tmp2.astype('uint8')
-
         kp1, des1 = sift.detectAndCompute(tmp1,None)
         kp2, des2 = sift.detectAndCompute(tmp2,None)
+        if(len(kp1)==0 or len(kp2)==0):
+            shifts[id] = np.nan  
+            continue
+        
         cv2.imwrite('original_image_right_keypoints.png',cv2.drawKeypoints(tmp1,kp1,None))
         cv2.imwrite('original_image_left_keypoints.png',cv2.drawKeypoints(tmp2,kp2,None))
         match = cv2.BFMatcher()
         matches = match.knnMatch(des1,des2,k=2)
         good = []
+        #VN: temporarily solution, knnMatch returns strange shape sometimes
+        if(len(matches)==0):
+            shifts[id] = np.nan  
+            continue
+        if(len(matches[0])!=2):
+            shifts[id] = np.nan  
+            continue
         for m,n in matches:
             if m.distance < threshold*n.distance:
                 good.append(m)

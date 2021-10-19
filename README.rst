@@ -139,7 +139,7 @@ Typical Workflow
         $ mosaic tile   --file-name /local/data/2021-06/Kaoumi/10_bottom/
 	$ mosaic shift  --file-name /local/data/2021-06/Kaoumi/10_bottom/
 
-After running `mosaic shift` check the shift_h.txt and shift_v.txt files located in the 10_bottom.mosaic folder for possible error in the feature autodetection.
+After running **mosaic shift** check the **shift_h.txt** and **shift_v.txt** files located in the **10_bottom.mosaic** folder for possible error in the feature autodetection,
 then::
 
 	$ mosaic stitch --file-name /local/data/2021-06/Kaoumi/10_bottom/ --test

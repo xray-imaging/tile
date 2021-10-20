@@ -90,8 +90,9 @@ def shift(args):
             #VN: tmp for Kaoumi dataset
             height = 350
             multipliers[iy,ix+1] = 1/(np.linalg.norm(norm1[:,data_shape[1]//2-height:data_shape[1]//2+height,-wx:])/np.linalg.norm(norm0[:,data_shape[1]//2-height:data_shape[1]//2+height,:wx]))
-            print(multipliers)
-    
+            log.info('multipliers:')
+            log.info(multipliers)
+
     # find shifts in vertical direction    
     shifts_v = np.zeros([ntiles_v,ntiles_h,2], dtype=np.float32)    
     for ix in range(ntiles_h):
@@ -161,7 +162,9 @@ def stitch(args):
     cshifts_h = np.cumsum(cshifts_h,axis=1)
     cshifts_v = np.cumsum(cshifts_v,axis=0)
     cmultipliers = np.cumprod(multipliers,axis=1)
-    print(cmultipliers)
+    log.info('multipliers:')
+    log.info(cmultipliers)
+
     # retrieve sizes (could be optimized)
     _, grid, data_shape, _, _ = fileio.tile(args)
     [ntiles_v,ntiles_h] = grid.shape
@@ -231,7 +234,8 @@ def stitch(args):
                     
                     # fill array part
                     proj[st_chunk:end_chunk,st_y:end_y,st_x:end_x] = proj0[:,st_y0:end_y0,st_x0:end_x0]
-                    print(f'{grid[iy,ix]=} {ix=} {iy=} {dark0.shape=}')
+                    log.info('grid[iy,ix] = %s, ix=%d, iy=%d dark0.shape[%d, %d, %d]' % (grid[iy,ix], ix, iy, dark0.shape[0], dark0.shape[1], dark0.shape[2]))
+                    # print(f'{grid[iy,ix]=} {ix=} {iy=} {dark0.shape=}')
                     if(ichunk==0): # flat and dark field can be filled once (VN: maybe we can move this code out of the loop)
                         flat[:,st_y:end_y,st_x:end_x] = np.mean(flat0[:,st_y0:end_y0,st_x0:end_x0],axis=0)
                         dark[:,st_y:end_y,st_x:end_x] = np.mean(dark0[:,st_y0:end_y0,st_x0:end_x0],axis=0)
@@ -273,11 +277,11 @@ def main():
     cmd_parsers = [
         ('init',        init,           (),                 "Create configuration file"),
         ('status',      status,         show_params,        "Show the mosaic-cli status"),
-        ('extract',     extract,        extract_params,     "Extract the mosaic tomography files"),
-        ('sort',        sort,           sort_params,        "Sort the mosaic tomography files according to their tile location"),
-        ('tile',        tile,           tile_params,        "Return the mosaic tiles"),
-        ('shift',       shift,          shift_params,       "testing shift"),
-        ('stitch',      stitch,         stitch_params,      "stitch all data"),
+        # ('extract',     extract,        extract_params,     "Extract the mosaic tomography files"),
+        # ('sort',        sort,           sort_params,        "Show the mosaic tomography files according to their tile location"),
+        ('tile',        tile,           tile_params,        "Show the file names in thier mosaic tile location"),
+        ('shift',       shift,          shift_params,       "Calculate the tile horizonal and vertical overlap"),
+        ('stitch',      stitch,         stitch_params,      "Create a single hdf file containing the mosaic datasets"),
     ]
 
     subparsers = parser.add_subparsers(title="Commands", metavar='')

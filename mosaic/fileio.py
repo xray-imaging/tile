@@ -34,6 +34,7 @@ def write_array(fname, arr):
             np.savetxt(outfile, data_slice, fmt='%-7.2f')
             # Writing out a break to indicate different slices...
             outfile.write('# New slice\n')
+    log.info('Shift information saved in %s' % fname)
 
 def read_array(fname):
 
@@ -182,5 +183,5 @@ def tile(args):
     proj0, flat0, dark0, theta0, _ = dxchange.read_dx(grid[0,0], proj=(0, 1))
     data_shape = [len(theta0),*proj0.shape[1:]]
 
-    print(f'{x_shift=},{y_shift=}')
+    # print(f'{x_shift=},{y_shift=}')
     return tile_dict, grid, data_shape, x_shift, y_shift

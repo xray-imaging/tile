@@ -13,6 +13,9 @@ from mosaic import util
 LOGS_HOME = Path.home()/'logs'
 CONFIG_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'mosaic.conf')
 
+SHIFT_H_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'shifts_h.txt')
+SHIFT_V_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'shifts_v.txt')
+
 SECTIONS = OrderedDict()
 
 SECTIONS['general'] = {
@@ -29,10 +32,11 @@ SECTIONS['general'] = {
     'verbose': {
         'default': True,
         'help': 'Verbose output',
-        'action': 'store_true'}}
+        'action': 'store_true'},
+        }
 
-SECTIONS['file-reading'] = {
-    'file-name': {
+SECTIONS['file-io'] = {
+    'folder-name': {
         'default': '.',
         'type': Path,
         'help': "Name of the last used directory containing multiple hdf files",
@@ -51,12 +55,43 @@ SECTIONS['file-reading'] = {
         'default': 0,
         'help': "Reconstruction binning factor as power(2, choice)",
         'choices': [0, 1, 2, 3]},
+    # 'shifts-h': {
+    #     'default': SHIFT_H_FILE_NAME,
+    #     'type': str,
+    #     'help': "File name storing the horizontal shifts",
+    #     'metavar': 'FILE'},
+    # 'shifts-v': {
+    #     'default': SHIFT_V_FILE_NAME,
+    #     'type': str,
+    #     'help': "File name storing the vertical shifts",
+    #     'metavar': 'FILE'},
+    'chunk-size': {     
+        'type': int,
+        'default': 64,
+        'help': "Number of of projections for simultaneous processing",},
+    'threshold': {
+        'default': 0.5,
+        'type': float,
+        'help': 'Threshold for selecting matching features (0,1)'},
        }
 
 
-MOSAIC_PARAMS = ('file-reading', )
 
-NICE_NAMES = ('General', 'File reading')
+SECTIONS['stitch'] = {
+    'test': {
+        'default': False,
+        'help': 'if set one projection called mosaic_test will be stitched and placed in raw data folded',
+        'action': 'store_true'},
+    'proj': {     
+        'type': int,
+        'default': 0,
+        'help': "Projection used for the stitching test",},
+       }
+
+MOSAIC_PARAMS = ('file-io', )
+STITCH_PARAMS = ('file-io', 'stitch')
+
+NICE_NAMES = ('General', 'File IO', 'Stitch')
 
 def get_config_name():
     """Get the command line --config option."""

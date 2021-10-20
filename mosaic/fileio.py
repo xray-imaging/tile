@@ -11,6 +11,19 @@ from mosaic import log
 KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 SHIFTS_FILE_HEADER = '# Array shape: '
 
+
+def service_fnames(mosaic_fname):
+
+    mosaic_folder = os.path.dirname(mosaic_fname)
+    # shifts_h_fname = os.path.join(mosaic_folder, 'shifts_h.npy')
+    # shifts_v_fname = os.path.join(mosaic_folder, 'shifts_v.npy')
+    # multipliers_fname = os.path.join(mosaic_folder, 'multipliers.npy')
+    shifts_h_fname = os.path.join(mosaic_folder, 'shifts_h.txt')
+    shifts_v_fname = os.path.join(mosaic_folder, 'shifts_v.txt')
+    multipliers_fname = os.path.join(mosaic_folder, 'multipliers.txt')
+
+    return shifts_h_fname, shifts_v_fname, multipliers_fname
+
 def write_array(fname, arr):
       
     # Write the array to disk
@@ -21,20 +34,27 @@ def write_array(fname, arr):
             np.savetxt(outfile, data_slice, fmt='%-7.2f')
             # Writing out a break to indicate different slices...
             outfile.write('# New slice\n')
+    log.info('Shift information saved in %s' % fname)
 
 def read_array(fname):
 
-    with open(fname) as f:
-        firstline = f.readlines()[0].rstrip()
+    new_data = None
+    try:
+        with open(fname) as f:
+            firstline = f.readlines()[0].rstrip()
 
-    header = SHIFTS_FILE_HEADER
-    fshape = firstline[len(header):]
-    fshape = fshape.replace('(','').replace(')','')  
-    shape = tuple(map(int, fshape.split(', ')))
+            header = SHIFTS_FILE_HEADER
+            fshape = firstline[len(header):]
+            fshape = fshape.replace('(','').replace(')','')  
+            shape = tuple(map(int, fshape.split(', ')))
 
-    # Read the array from disk
-    new_data = np.loadtxt(fname)
-    new_data = new_data.reshape(shape)
+            # Read the array from disk
+            new_data = np.loadtxt(fname)
+            new_data = new_data.reshape(shape)
+    except Exception as error: 
+        log.error("%s not found" % fname)
+        log.error("run -- $ mosaic shift -- first")
+        ##FDC shall we return an arrays with zeros? to handle vertial/horizontal scans?
     return new_data
 
 def extract_meta(fname):
@@ -70,23 +90,23 @@ def extract_dict(fname, list_to_extract, index=0):
 def extract(args):
 
     log.warning('checking mosaic files ...')
-    file_path = Path(args.file_name)
+    file_path = Path(args.folder_name)
 
     if str(args.file_format) in KNOWN_FORMATS:
 
         if file_path.is_file(): #or len(next(os.walk(file_path))[2]) == 1:
             log.error("A mosaic dataset requires more than 1 file")
-            log.error("%s contains only 1 file" % args.file_name)
+            log.error("%s contains only 1 file" % args.folder_name)
         elif file_path.is_dir():
-            log.info("Checking directory: %s for a mosaic scan" % args.file_name)
+            log.info("Checking directory: %s for a mosaic scan" % args.folder_name)
             # Add a trailing slash if missing
-            top = os.path.join(args.file_name, '')
-            meta_dict = extract_meta(args.file_name)
+            top = os.path.join(args.folder_name, '')
+            meta_dict = extract_meta(args.folder_name)
 
             return meta_dict
 
         else:
-            log.error("directory %s does not contain any file" % args.file_name)
+            log.error("directory %s does not contain any file" % args.folder_name)
     else:
         log.error("  *** %s is not a supported file format" % args.file_format)
         log.error("supported data formats are: %s, %s, %s, %s" % tuple(KNOWN_FORMATS))
@@ -162,4 +182,6 @@ def tile(args):
 
     proj0, flat0, dark0, theta0, _ = dxchange.read_dx(grid[0,0], proj=(0, 1))
     data_shape = [len(theta0),*proj0.shape[1:]]
+
+    # print(f'{x_shift=},{y_shift=}')
     return tile_dict, grid, data_shape, x_shift, y_shift

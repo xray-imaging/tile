@@ -147,7 +147,8 @@ To create a single hdf file containing the mosaic datasets::
 ready to be reconstructed with `tomopy cli <https://tomopycli.readthedocs.io/en/latest/>`_
 
 ::
-    tomopy recon  --file-name  mosaic_data_folder/mosaic/mosaic.h5  --binning 2 --rotation-axis-auto manual --center-search-width 5 --rotation-axis 5653 --nsino-per-chunk 32 --reconstruction-type full --remove-stripe-method vo-all --fix-nan-and-inf True
+
+    $ tomopy recon  --file-name  mosaic_data_folder/mosaic/mosaic.h5  --binning 2 --rotation-axis-auto manual --center-search-width 5 --rotation-axis 5653 --nsino-per-chunk 32 --reconstruction-type full --remove-stripe-method vo-all --fix-nan-and-inf True
 
 
 

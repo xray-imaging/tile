@@ -82,33 +82,42 @@ from `tomobank <https://tomobank.readthedocs.io/en/latest/index.html>`_:
 
 Return a numpy array containing the tile filename::
 
-    2021-09-28 19:43:41,178 - Started mosaic
-    2021-09-28 19:43:41,178 - Saving log at /home/beams/FAST/logs/mosaic_2021-09-28_19_43_41.log
-    2021-09-28 19:43:41,178 - General
-    2021-09-28 19:43:41,178 -   config           /home/beams/FAST/mosaic.conf
-    2021-09-28 19:43:41,178 -   verbose          True
-    2021-09-28 19:43:41,178 - File reading
-    2021-09-28 19:43:41,179 -   binning          0
-    2021-09-28 19:43:41,179 -   nsino            0.5
-    2021-09-28 19:43:41,179 - checking mosaic files ...
-    2021-09-28 19:43:41,179 - Checking directory: 2021-09/Pasha for a mosaic scan
-    2021-09-28 19:43:42,261 - mosaic file sorted
-    2021-09-28 19:43:42,262 - x0y0: x = -3.800300; y = 15.000000, file name = 2021-09/Pasha/mosaic_test_001.h5, original file name = 2021-09/Pasha/mosaic_test_001.h5
-    2021-09-28 19:43:42,262 - x1y0: x = -0.000300; y = 15.000000, file name = 2021-09/Pasha/mosaic_test_002.h5, original file name = 2021-09/Pasha/mosaic_test_002.h5
-    2021-09-28 19:43:42,263 - x2y0: x = 3.799700; y = 15.000000, file name = 2021-09/Pasha/mosaic_test_003.h5, original file name = 2021-09/Pasha/mosaic_test_003.h5
-    2021-09-28 19:43:42,263 - x0y1: x = -3.800300; y = 16.400000, file name = 2021-09/Pasha/mosaic_test_004.h5, original file name = 2021-09/Pasha/mosaic_test_004.h5
-    2021-09-28 19:43:42,263 - x1y1: x = -0.000300; y = 16.400000, file name = 2021-09/Pasha/mosaic_test_005.h5, original file name = 2021-09/Pasha/mosaic_test_005.h5
-    2021-09-28 19:43:42,263 - x2y1: x = 3.799700; y = 16.400000, file name = 2021-09/Pasha/mosaic_test_006.h5, original file name = 2021-09/Pasha/mosaic_test_006.h5
-    2021-09-28 19:43:42,263 - x0y2: x = -3.800300; y = 17.800000, file name = 2021-09/Pasha/mosaic_test_007.h5, original file name = 2021-09/Pasha/mosaic_test_007.h5
-    2021-09-28 19:43:42,263 - x1y2: x = -0.000300; y = 17.800000, file name = 2021-09/Pasha/mosaic_test_008.h5, original file name = 2021-09/Pasha/mosaic_test_008.h5
-    2021-09-28 19:43:42,263 - x2y2: x = 3.799700; y = 17.800000, file name = 2021-09/Pasha/mosaic_test_009.h5, original file name = 2021-09/Pasha/mosaic_test_009.h5
-    2021-09-28 19:43:42,264 - mosaic shift (x, y) in pixels: (2202, 811)
-    2021-09-28 19:43:42,958 - image   size (x, y) in pixels: (2448, 900)
-    2021-09-28 19:43:42,967 - mosaic file name grid:
-                 x_0                                         x_1                            x_2
-    y_0  2021-09/Pasha/mosaic_test_001.h5  2021-09/Pasha/mosaic_test_002.h5  2021-09/Pasha/mosaic_test_003.h5
-    y_1  2021-09/Pasha/mosaic_test_004.h5  2021-09/Pasha/mosaic_test_005.h5  2021-09/Pasha/mosaic_test_006.h5
-    y_2  2021-09/Pasha/mosaic_test_007.h5  2021-09/Pasha/mosaic_test_008.h5  2021-09/Pasha/mosaic_test_009.h5
+    2021-10-20 13:24:31,468 - Started mosaic
+    2021-10-20 13:24:31,468 - Saving log at /home/beams/TOMO/logs/mosaic_2021-10-20_13_24_31.log
+    2021-10-20 13:24:31,468 - General
+    2021-10-20 13:24:31,468 -   config           /home/beams/TOMO/mosaic.conf
+    2021-10-20 13:24:31,468 -   verbose          True
+    2021-10-20 13:24:31,468 - File IO
+    2021-10-20 13:24:31,468 -   binning          0
+    2021-10-20 13:24:31,468 -   nsino            0.5
+    2021-10-20 13:24:31,468 -   threshold        0.5
+    2021-10-20 13:24:31,468 - checking mosaic files ...
+    2021-10-20 13:24:31,468 - Checking directory: /data/2021-06/Kaoumi/7_top for a mosaic scan
+    2021-10-20 13:24:32,421 - mosaic file sorted
+    2021-10-20 13:24:32,421 - x0y0: x = -7.600000; y = 17.300000, file name = 2021-09/Pasha/mosaic_test_036.h5, original file name = 2021-09/Pasha/mosaic_test_036.h5
+    2021-10-20 13:24:32,421 - x1y0: x = -3.800000; y = 17.300000, file name = 2021-09/Pasha/mosaic_test_037.h5, original file name = 2021-09/Pasha/mosaic_test_037.h5
+    2021-10-20 13:24:32,421 - x2y0: x = -0.000000; y = 17.300000, file name = 2021-09/Pasha/mosaic_test_038.h5, original file name = 2021-09/Pasha/mosaic_test_038.h5
+    2021-10-20 13:24:32,421 - x3y0: x = 3.800000; y = 17.300000, file name = 2021-09/Pasha/mosaic_test_039.h5, original file name = 2021-09/Pasha/mosaic_test_039.h5
+    2021-10-20 13:24:32,421 - x4y0: x = 7.600000; y = 17.300000, file name = 2021-09/Pasha/mosaic_test_040.h5, original file name = 2021-09/Pasha/mosaic_test_040.h5
+    2021-10-20 13:24:32,421 - x0y1: x = -7.600000; y = 18.700000, file name = 2021-09/Pasha/mosaic_test_041.h5, original file name = 2021-09/Pasha/mosaic_test_041.h5
+    2021-10-20 13:24:32,421 - x1y1: x = -3.800000; y = 18.700000, file name = 2021-09/Pasha/mosaic_test_042.h5, original file name = 2021-09/Pasha/mosaic_test_042.h5
+    2021-10-20 13:24:32,421 - x2y1: x = -0.000000; y = 18.700000, file name = 2021-09/Pasha/mosaic_test_043.h5, original file name = 2021-09/Pasha/mosaic_test_043.h5
+    2021-10-20 13:24:32,421 - x3y1: x = 3.800000; y = 18.700000, file name = 2021-09/Pasha/mosaic_test_044.h5, original file name = 2021-09/Pasha/mosaic_test_044.h5
+    2021-10-20 13:24:32,421 - x4y1: x = 7.600000; y = 18.700000, file name = 2021-09/Pasha/mosaic_test_045.h5, original file name = 2021-09/Pasha/mosaic_test_045.h5
+    2021-10-20 13:24:32,421 - x0y2: x = -7.600000; y = 20.100000, file name = 2021-09/Pasha/mosaic_test_046.h5, original file name = 2021-09/Pasha/mosaic_test_046.h5
+    2021-10-20 13:24:32,421 - x1y2: x = -3.800000; y = 20.100000, file name = 2021-09/Pasha/mosaic_test_047.h5, original file name = 2021-09/Pasha/mosaic_test_047.h5
+    2021-10-20 13:24:32,421 - x2y2: x = -0.000000; y = 20.100000, file name = 2021-09/Pasha/mosaic_test_048.h5, original file name = 2021-09/Pasha/mosaic_test_048.h5
+    2021-10-20 13:24:32,421 - x3y2: x = 3.800000; y = 20.100000, file name = 2021-09/Pasha/mosaic_test_049.h5, original file name = 2021-09/Pasha/mosaic_test_049.h5
+    2021-10-20 13:24:32,421 - x4y2: x = 7.600000; y = 20.100000, file name = 2021-09/Pasha/mosaic_test_050.h5, original file name = 2021-09/Pasha/mosaic_test_050.h5
+    2021-10-20 13:24:32,615 - image   size (x, y) in pixels: (2448, 900)
+    2021-10-20 13:24:32,615 - mosaic shift (x, y) in pixels: (2235, 823)
+    2021-10-20 13:24:32,615 - tile overlap (x, y) in pixels: (213, 77)
+    2021-10-20 13:24:32,651 - mosaic file name grid:
+                 y_0                                      y_1                               y_2                               y_3                            y_4
+    x_0  2021-09/Pasha/mosaic_test_036.h5  2021-09/Pasha/mosaic_test_037.h5  2021-09/Pasha/mosaic_test_038.h5  2021-09/Pasha/mosaic_test_039.h5  2021-09/Pasha/mosaic_test_040.h5
+    x_1  2021-09/Pasha/mosaic_test_041.h5  2021-09/Pasha/mosaic_test_042.h5  2021-09/Pasha/mosaic_test_043.h5  2021-09/Pasha/mosaic_test_044.h5  2021-09/Pasha/mosaic_test_045.h5
+    x_2  2021-09/Pasha/mosaic_test_046.h5  2021-09/Pasha/mosaic_test_047.h5  2021-09/Pasha/mosaic_test_048.h5  2021-09/Pasha/mosaic_test_049.h5  2021-09/Pasha/mosaic_test_050.h5
+
 
 
 

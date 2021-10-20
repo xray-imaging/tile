@@ -120,6 +120,7 @@ To find the actual shifs using features in the image::
     2021-10-20 10:11:14,117 - Shift information saved in 2021-09/Pasha/mosaic/shifts_v.txt
     2021-10-20 10:11:14,118 - Shift information saved in 2021-09/Pasha/mosaic/multipliers.txt
 
+After running **mosaic shift** check the **shift_h.txt** and **shift_v.txt** files located in the **10_bottom.mosaic** folder for possible error in the feature autodetection.
 
 To create a single image to check the stitching run::
 
@@ -142,8 +143,11 @@ To create a single hdf file containing the mosaic datasets::
     $ mosaic stitch --folder-name mosaic_data_folder/
     2021-10-20 10:33:17,431 - Stitched h5 file is saved as 2021-09/Pasha/mosaic/mosaic.h5
 
+
 ready to be reconstructed with `tomopy cli <https://tomopycli.readthedocs.io/en/latest/>`_
 
 ::
     tomopy recon  --file-name  mosaic_data_folder/mosaic/mosaic.h5  --binning 2 --rotation-axis-auto manual --center-search-width 5 --rotation-axis 5653 --nsino-per-chunk 32 --reconstruction-type full --remove-stripe-method vo-all --fix-nan-and-inf True
+
+
 

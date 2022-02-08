@@ -75,21 +75,27 @@ SECTIONS['file-io'] = {
         'help': 'Threshold for selecting matching features (0,1)'},
        }
 
-
-
 SECTIONS['stitch'] = {
     'test': {
         'default': False,
-        'help': 'if set one projection called mosaic_test will be stitched and placed in raw data folded',
-        'action': 'store_true'},
+        'help': 'if set one projection called mosaic_test will be stitched and placed in raw data folded'},
     'proj': {     
         'type': int,
         'default': 0,
-        'help': "Projection used for the stitching test",},
+        'help': "Projection used for the stitching test"},
        }
 
-MOSAIC_PARAMS = ('file-io', )
+SECTIONS['shift'] = {
+    'mode': {
+        'default': 'manual',
+        'type' : str,
+        'choices': ['auto', 'manual'],
+        'help': 'Select the shift mode'},
+    }
+
+MOSAIC_PARAMS = ('file-io', 'stitch')
 STITCH_PARAMS = ('file-io', 'stitch')
+SHIFT_PARAMS = ('file-io', 'shift')
 
 NICE_NAMES = ('General', 'File IO', 'Stitch')
 

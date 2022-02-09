@@ -30,7 +30,7 @@ SECTIONS['general'] = {
         'help': "Log file directory",
         'metavar': 'FILE'},
     'verbose': {
-        'default': True,
+        'default': False,
         'help': 'Verbose output',
         'action': 'store_true'},
         }

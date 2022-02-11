@@ -42,10 +42,7 @@ def run_tile(args):
     log.info('mosaic file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
 
 def run_shift(args):
-    if args.mode == 'auto':
-        shift.shift_auto(args)
-    else:
-        shift.shift_manual(args)
+    shift.shift_manual(args)
 
 def run_stitch(args):
     stitch.stitch(args)

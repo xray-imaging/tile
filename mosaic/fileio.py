@@ -140,7 +140,6 @@ def tile(args):
     tile_dict = {}
     
     for k, v in y_sorted.items():
-
         if meta_dict[k][sample_x][0] > x_start:
             key = 'x' + str(tile_index_x) + 'y' + str(tile_index_y)
             # key = [str(tile_index_x),s tr(tile_index_y)]

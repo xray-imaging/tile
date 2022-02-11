@@ -50,31 +50,6 @@ def get_index(file_list):
 
     return np.asarray(ind_buff).astype('int')
 
-
-def find_min_max(data):
-    """Find min and max values according to histogram"""
-    
-    mmin = np.zeros(data.shape[0],dtype='float32')
-    mmax = np.zeros(data.shape[0],dtype='float32')
-    
-    for k in range(data.shape[0]):
-        h, e = np.histogram(data[k][:],1000)
-        stend = np.where(h>np.max(h)*0.005)
-        st = stend[0][0]
-        end = stend[0][-1]        
-        mmin[k] = e[st]
-        mmax[k] = e[end+1]
-     
-    return mmin, mmax
-
-
-def chunk(iterable, size):
-    it = iter(iterable)
-    item = list(islice(it, size))
-    while item:
-        yield np.array(item)
-        item = list(islice(it, size))
-
 # Print iterations progress
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
     """
@@ -96,15 +71,3 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     # Print New Line on Complete
     if iteration == total: 
         print()
-
-def add_proj():
-
-    with h5py.File('/data/2021-12/Duchkov/mosaic/mosaic_2073.h5','r+') as fid:
-        fid['/exchange/data'].resize([6000,2048,2448])
-        fid['/exchange/data'][5999][:] = fid['/exchange/data'][5998]
-        theta = fid['/exchange/theta'][:]
-        # fid['/exchange/theta'][-1] = theta[-1]+theta[1] - theta[0]
-        theta_new = np.concatenate((theta,[theta[-1]+theta[1] - theta[0]]))
-        del fid['/exchange/theta']
-        fid.create_dataset('/exchange/theta', (6000,), dtype='f')
-        fid['/exchange/theta'][:] = theta_new

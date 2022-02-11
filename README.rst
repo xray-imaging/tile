@@ -51,6 +51,7 @@ Install tomocupy
 3. Install tomocupy
 ~~~~~~~~~~~~~~~~~~~
 ::
+
   git clone https://github.com/nikitinvv/tomocupy-cli
   cd tomocupy-cli
   python setup.py install 

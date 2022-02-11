@@ -10,17 +10,6 @@ Once the stitching is completed the tomographic reconstruction can be done with 
    :width: 720px
    :alt: project
 
-
-Features
---------
-
-
-
-Highlights
-----------
-
-
-
 .. toctree::
    :hidden:
    :maxdepth: 1

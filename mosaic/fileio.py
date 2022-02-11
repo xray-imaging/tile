@@ -19,6 +19,7 @@ SPACE_PREFIX = "    "
 KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 SHIFTS_FILE_HEADER = '# Array shape: '
 
+__all__ = ['read_hdf_meta']
 
 def service_fnames(mosaic_fname):
 

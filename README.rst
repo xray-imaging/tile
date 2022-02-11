@@ -60,7 +60,7 @@ Install tomocupy
 Install tomopy
 ==============
 
-To install tomopy `tomopy <https://tomopy.readthedocs.io/en/latest/>`_/`tomopy cli <https://tomopycli.readthedocs.io/en/latest/>`_ follow the ` tomopy install <https://tomopy.readthedocs.io/en/latest/install.html>`_/`tomopycli install <https://tomopycli.readthedocs.io/en/latest/source/install.html>`_ instructions.
+To install tomopy `tomopy <https://tomopy.readthedocs.io/en/latest/>`_/`tomopy cli <https://tomopycli.readthedocs.io/en/latest/>`_ follow the `tomopy install <https://tomopy.readthedocs.io/en/latest/install.html>`_/`tomopycli install <https://tomopycli.readthedocs.io/en/latest/source/install.html>`_ instructions.
 
 =====
 Usage

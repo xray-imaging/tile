@@ -47,15 +47,23 @@ SECTIONS['file-io'] = {
         'default': 0.5,
         'type': float,
         'help': 'Location of the sinogram used for slice reconstruction and find axis (0 top, 1 bottom)'},
+    'nproj': {
+        'default': 0.5,
+        'type': float,
+        'help': 'Location of the projection used for testing shifts between tiles (0 top, 1 bottom)'},
     'binning': {
         'type': util.positive_int,
         'default': 0,
         'help': "Reconstruction binning factor as power(2, choice)",
         'choices': [0, 1, 2, 3]},
-    'chunk-size': {     
+    'nproj-per-chunk': {     
         'type': int,
         'default': 64,
-        'help': "Number of of projections for simultaneous processing",},
+        'help': "Number of of projections for simultaneous processing",},    
+    'nsino-per-chunk': {     
+        'type': int,
+        'default': 8,
+        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory. ",},    
        }
 
 SECTIONS['stitch'] = {
@@ -87,11 +95,6 @@ SECTIONS['shift'] = {
         'type': float,
         'default': 0.5,
         'help': "+/- center search step (pixel). "},
-    'tmp-file-name': {
-        'default': '/data/tmp/t.h5',
-        'type': Path,
-        'help': "Tmp file name for storing hdf5 with stitched projections",
-        'metavar': 'PATH'},
     'shift-search-width': {
         'type': int,
         'default': 20,
@@ -100,13 +103,6 @@ SECTIONS['shift'] = {
         'type': int,
         'default': 1,
         'help': "+/- center search step (pixel). "},
-    'nsino-per-chunk': {     
-        'type': int,
-        'default': 8,
-        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory. ",},    
-    'flip': {
-        'default': False,
-        'help': "Flip data in x"},
     }
 
 MOSAIC_PARAMS = ('file-io', 'stitch')

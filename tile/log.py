@@ -1,5 +1,5 @@
 '''
-    mosaic custom logger
+    tile custom logger
     
 '''
 import logging

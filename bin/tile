@@ -10,17 +10,15 @@
 
 import os
 import sys
-import time
 import argparse
-import numpy as np
 import pandas as pd
 from datetime import datetime
 
-from mosaic import log
-from mosaic import config
-from mosaic import fileio
-from mosaic import shift
-from mosaic import stitch
+from tile import log
+from tile import config
+from tile import fileio
+from tile import shift
+from tile import stitch
 
 def init(args):
     if not os.path.exists(str(args.config)):
@@ -31,36 +29,36 @@ def init(args):
 def status(args):
     config.show_config(args)
 
-def run_tile(args):
-    meta_dict, grid, data_shape, x_shift, y_shift = fileio.tile(args)
+def run_info(args):
+    meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
     log.info('image   size (x, y) in pixels: (%d, %d)' % (data_shape[2], data_shape[1]))
-    log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
+    log.info('tile shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
 
     index = [f'x_{num}' for num in range(grid.shape[0])]
     columns = [f'y_{num}' for num in range(grid.shape[1])]
-    log.info('mosaic file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
+    log.info('tile file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
 
 def run_shift(args):
     shift.shift_manual(args)
 
 def run_stitch(args):
-    stitch.stitch(args)
+    stitch.stitching(args)
 
 def main():   
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', **config.SECTIONS['general']['config'])
-    show_params     = config.MOSAIC_PARAMS
-    tile_params     = config.MOSAIC_PARAMS
+    show_params     = config.ALL_PARAMS
+    info_params     = config.INFO_PARAMS
     shift_params    = config.SHIFT_PARAMS
     stitch_params   = config.STITCH_PARAMS
 
     cmd_parsers = [
         ('init',        init,           (),                 "Create configuration file"),
-        ('status',      status,         show_params,        "Show the mosaic-cli status"),
-        ('tile',        run_tile,       tile_params,        "Show the file names in thier mosaic tile location"),
-        ('shift',       run_shift,      shift_params,       "Calculate the tile horizonal and vertical overlap"),
-        ('stitch',      run_stitch,     stitch_params,      "Create a single hdf file containing the mosaic datasets"),
+        ('status',      status,         show_params,        "Show the tile-cli status"),
+        ('info',        run_info,       info_params,        "Show the file names in tile  location"),
+        ('shift',       run_shift,      shift_params,       "Calculate the tile horizonal shifts"),
+        ('stitch',      run_stitch,     stitch_params,      "Create a single hdf file containing the tile datasets"),
     ]
 
     subparsers = parser.add_subparsers(title="Commands", metavar='')
@@ -80,24 +78,18 @@ def main():
     if not os.path.exists(logs_home):
         os.makedirs(logs_home)
 
-    lfname = os.path.join(logs_home, 'mosaic_' + datetime.strftime(datetime.now(), "%Y-%m-%d_%H_%M_%S") + '.log')
+    lfname = os.path.join(logs_home, 'tile_' + datetime.strftime(datetime.now(), "%Y-%m-%d_%H_%M_%S") + '.log')
 
     log.setup_custom_logger(lfname)
-    log.debug("Started mosaic")
+    log.debug("Started tile")
     log.warning('Saving log at %s' % lfname)
-    
-    mosaic_home = os.path.join(args.folder_name, 'mosaic')
-    if not os.path.exists(mosaic_home):
-        os.makedirs(mosaic_home)    
-    
-    args.mosaic_fname = os.path.join(mosaic_home, 'mosaic.h5')
 
     try: 
         # load args from default (config.py) if not changed
         config.log_values(args)
         args._func(args)
         # undate meta5.config file
-        sections = config.MOSAIC_PARAMS
+        sections = config.ALL_PARAMS
         config.write(args.config, args=args, sections=sections)
     except RuntimeError as e:
         log.error(str(e))

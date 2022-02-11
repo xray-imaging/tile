@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Mosaic documentation build configuration file, created by
+# Tile documentation build configuration file, created by
 # sphinx-quickstart on Fri Mar 13 16:29:32 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -71,7 +71,7 @@ master_doc = 'index'
 
 # General information about the project.
 Argonne = u'Argonne National Laboratory'
-project = u'Mosaic'
+project = u'Tile'
 copyright = u'2016, ' + Argonne
 
 # The version info for the project you're documenting, acts as replacement for
@@ -285,7 +285,7 @@ texinfo_documents = [
   project+u' Documentation',
   Argonne,
   project,
-  'Mosaic Tomography'),
+  'Tile Tomography'),
 ]
 
 # Documents to append as an appendix to all manuals.

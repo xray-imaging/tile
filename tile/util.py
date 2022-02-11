@@ -1,15 +1,9 @@
 """Various utility functions."""
 import re
-import os
-import h5py 
-import glob
-import math
 import argparse
 import numpy as np
-from itertools import islice
-from collections import OrderedDict
 
-from mosaic import log
+from tile import log
 
 def tupleize(num_items=None, conv=float, dtype=tuple):
     """Convert comma-separated string values to a *num-items*-tuple of values converted with

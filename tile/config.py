@@ -3,15 +3,14 @@ import sys
 import pathlib
 import argparse
 import configparser
-import numpy as np
 from collections import OrderedDict
 from pathlib import Path
 
-from mosaic import log
-from mosaic import util
+from tile import log
+from tile import util
 
 LOGS_HOME = Path.home()/'logs'
-CONFIG_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'mosaic.conf')
+CONFIG_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'tile.conf')
 
 SECTIONS = OrderedDict()
 
@@ -43,28 +42,7 @@ SECTIONS['file-io'] = {
         'type': str,
         'help': "see from https://dxchange.readthedocs.io/en/latest/source/demo.html",
         'choices': ['dx', 'anka', 'australian', 'als', 'elettra', 'esrf', 'aps1id', 'aps2bm', 'aps5bm', 'aps7bm', 'aps8bm', 'aps13bm', 'aps32id', 'petraP05', 'tomcat', 'xradia']},
-    'nsino': {
-        'default': 0.5,
-        'type': float,
-        'help': 'Location of the sinogram used for slice reconstruction and find axis (0 top, 1 bottom)'},
-    'nproj': {
-        'default': 0.5,
-        'type': float,
-        'help': 'Location of the projection used for testing shifts between tiles (0 top, 1 bottom)'},
-    'binning': {
-        'type': util.positive_int,
-        'default': 0,
-        'help': "Reconstruction binning factor as power(2, choice)",
-        'choices': [0, 1, 2, 3]},
-    'nproj-per-chunk': {     
-        'type': int,
-        'default': 64,
-        'help': "Number of of projections for simultaneous processing",},    
-    'nsino-per-chunk': {     
-        'type': int,
-        'default': 8,
-        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory. ",},    
-       }
+        }
 
 SECTIONS['stitch'] = {
     'x-shifts': {
@@ -78,11 +56,19 @@ SECTIONS['stitch'] = {
     'end-proj': {
         'default': -1,
         'type': int,
-        'help': "End projection"},
-       }
-
+        'help': "End projection"},   
+    'nproj-per-chunk': {     
+        'default': 64,
+        'type': int,        
+        'help': "Number of of projections for simultaneous processing",},    
+    }    
 
 SECTIONS['shift'] = {
+    'binning': {
+        'type': util.positive_int,
+        'default': 0,
+        'help': "Reconstruction binning factor as power(2, choice)",
+        'choices': [0, 1, 2, 3]},
     'rotation-axis': {
         'default': -1.0,
         'type': float,
@@ -103,13 +89,30 @@ SECTIONS['shift'] = {
         'type': int,
         'default': 1,
         'help': "+/- center search step (pixel). "},
+    'nsino': {
+        'default': 0.5,
+        'type': float,
+        'help': 'Location of the sinogram used for slice reconstruction and find axis (0 top, 1 bottom)'},
+    'nprojection': {
+        'default': 0.5,
+        'type': float,
+        'help': 'Location of the projection used for testing shifts between tiles (0 top, 1 bottom)'},    
+    'nsino-per-chunk': {     
+        'type': int,
+        'default': 8,
+        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory. ",},    
+    'recon-engine': {     
+        'type': str,
+        'default': 'tomopy',
+        'help': "Reconstruction engine (tomopy or tomocupy). ",},    
     }
 
-MOSAIC_PARAMS = ('file-io', 'stitch')
+INFO_PARAMS = ('file-io',)
 STITCH_PARAMS = ('file-io', 'stitch')
 SHIFT_PARAMS = ('file-io', 'shift')
+ALL_PARAMS = ('file-io', 'shift', 'stitch')
 
-NICE_NAMES = ('General', 'File IO', 'Stitch')
+NICE_NAMES = ('General', 'File IO', 'Shift', 'Stitch')
 
 def get_config_name():
     """Get the command line --config option."""
@@ -250,7 +253,7 @@ def show_config(args):
     """
     args = args.__dict__
 
-    log.warning('mosaic status start')
+    log.warning('tile status start')
     for section, name in zip(SECTIONS, NICE_NAMES):
         entries = sorted((k for k in args.keys() if k.replace('_', '-') in SECTIONS[section]))
         if entries:
@@ -258,5 +261,5 @@ def show_config(args):
                 value = args[entry] if args[entry] != None else "-"
                 log.info("  {:<16} {}".format(entry, value))
 
-    log.warning('mosaic status end')
+    log.warning('tile status end')
  

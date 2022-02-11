@@ -5,10 +5,10 @@ import numpy as np
 import dxchange.reader as dxreader
 import dxchange
 
-from collections import OrderedDict, deque
+from collections import deque
 from pathlib import Path
 
-from mosaic import log
+from tile import log
 
 PIPE = "│"
 ELBOW = "└──"
@@ -20,18 +20,6 @@ KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 SHIFTS_FILE_HEADER = '# Array shape: '
 
 __all__ = ['read_hdf_meta']
-
-def service_fnames(mosaic_fname):
-
-    mosaic_folder = os.path.dirname(mosaic_fname)
-    # shifts_h_fname = os.path.join(mosaic_folder, 'shifts_h.npy')
-    # shifts_v_fname = os.path.join(mosaic_folder, 'shifts_v.npy')
-    # multipliers_fname = os.path.join(mosaic_folder, 'multipliers.npy')
-    shifts_h_fname = os.path.join(mosaic_folder, 'shifts_h.txt')
-    shifts_v_fname = os.path.join(mosaic_folder, 'shifts_v.txt')
-    multipliers_fname = os.path.join(mosaic_folder, 'multipliers.txt')
-
-    return shifts_h_fname, shifts_v_fname, multipliers_fname
 
 def write_array(fname, arr):
       
@@ -62,7 +50,7 @@ def read_array(fname):
             new_data = new_data.reshape(shape)
     except Exception as error: 
         log.error("%s not found" % fname)
-        log.error("run -- $ mosaic shift -- first")
+        log.error("run -- $ tile shift -- first")
         ##FDC shall we return an arrays with zeros? to handle vertial/horizontal scans?
     return new_data
 
@@ -93,16 +81,16 @@ def extract_dict(fname):
 
 def extract(args):
 
-    log.warning('checking mosaic files ...')
+    log.warning('checking tile files ...')
     file_path = Path(args.folder_name)
 
     if str(args.file_format) in KNOWN_FORMATS:
 
         if file_path.is_file(): #or len(next(os.walk(file_path))[2]) == 1:
-            log.error("A mosaic dataset requires more than 1 file")
+            log.error("A tile dataset requires more than 1 file")
             log.error("%s contains only 1 file" % args.folder_name)
         elif file_path.is_dir():
-            log.info("Checking directory: %s for a mosaic scan" % args.folder_name)
+            log.info("Checking directory: %s for a tile scan" % args.folder_name)
             # Add a trailing slash if missing
             top = os.path.join(args.folder_name, '')
             meta_dict = extract_meta(args.folder_name)
@@ -123,7 +111,7 @@ def tile(args):
     resolution     = 'measurement_instrument_detection_system_objective_resolution'
     full_file_name = 'measurement_sample_full_file_name'
 
-    log.warning('mosaic file sorted')
+    log.warning('tile file sorted')
     x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1][sample_x])}
     y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1][sample_y])}
     
@@ -180,7 +168,7 @@ def tile(args):
     proj0, flat0, dark0, theta0, _ = dxchange.read_dx(grid[0,0], proj=(0, 1))
     data_shape = [len(theta0),*proj0.shape[1:]]
 
-    return meta_dict, grid, data_shape, x_shift, y_shift
+    return meta_dict, grid, data_shape, proj0.dtype, x_shift, y_shift
 
 
 
@@ -198,7 +186,10 @@ def read_hdf_meta(fname, add_shape=True):
 
     Returns
     -------
-    list of string
+    meta : dict
+        A dictionary containing all hdf file meta data
+    tree : list
+        A list of string containing the hdf file tree structure
     """
 
     tree = deque()
@@ -213,7 +204,7 @@ def read_hdf_meta(fname, add_shape=True):
 def _get_subgroups(hdf_object, key=None):
     """
     Supplementary method for building the tree view of a hdf5 file.
-    Return the name of subgroups.
+    Return the name of subgroups :cite:`Vo:21`.
     """
     list_group = []
     if key is None:
@@ -240,7 +231,7 @@ def _add_branches(tree, meta, hdf_object, key, key1, index, last_index, prefix,
                   connector, level, add_shape):
     """
     Supplementary method for building the tree view of a hdf5 file.
-    Add branches to the tree.
+    Add branches to the tree :cite:`Vo:21`.
     """
     shape = None
     key_comb = key + "/" + key1
@@ -281,7 +272,7 @@ def _extract_hdf(tree, meta, hdf_object, prefix="", key=None, level=0,
                     add_shape=True):
     """
     Supplementary method for building the tree view of a hdf5 file.
-    Create the tree body.
+    Create the tree body :cite:`Vo:21`..
     """
     entries, key = _get_subgroups(hdf_object, key)
     num_ent = len(entries)

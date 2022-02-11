@@ -1,19 +1,22 @@
-from mosaic import log
-from mosaic import fileio
-import numpy as np
 import os
 import dxchange
 import dxfile.dxtomo as dx
-import h5py
+import numpy as np
+
+from tile import log
+from tile import fileio
+
+__all__ = ['shift_manual']
 
 def shift_manual(args):
+    """Find shifts between horizontal tiles"""
 
     log.info('Run manual shift')
     # read files grid and retrieve data sizes
-    meta_dict, grid, data_shape, x_shift, y_shift = fileio.tile(args)
+    meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
 
     log.info('image   size (x, y) in pixels: (%d, %d)' % (data_shape[2], data_shape[1]))
-    log.info('mosaic shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
+    log.info('stitch shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
 
     # check if flip is needed for having tile[0,0] as the left one and at sample_x=0
@@ -24,15 +27,17 @@ def shift_manual(args):
         step = -1
     else:
         step = 1
+    # ids for slice and projection for shifts testing
     idslice = int((data_shape[1]-1)*args.nsino)
     idproj = int((data_shape[0]-1)*args.nproj)
-    data,flat,dark,theta = dxchange.read_aps_32id(grid[0,0],sino=(idslice,idslice+2**args.binning))    
-    size = int(np.ceil((data_shape[2]+(grid.shape[1]-1)*x_shift)/2**(args.binning+1))*2**(args.binning+1))
-    data_all = np.ones([data_shape[0],2**args.binning,size],dtype=data.dtype)
-    dark_all = np.zeros([1,2**args.binning,size],dtype=data.dtype)
-    flat_all = np.ones([1,2**args.binning,size],dtype=data.dtype)
 
-    tmp_file_name = f'{args.folder_name}/mosaic/tmp.h5'
+    # data size after stitching
+    size = int(np.ceil((data_shape[2]+(grid.shape[1]-1)*x_shift)/2**(args.binning+1))*2**(args.binning+1))
+    data_all = np.ones([data_shape[0],2**args.binning,size],dtype=data_type)
+    dark_all = np.zeros([1,2**args.binning,size],dtype=data_type)
+    flat_all = np.ones([1,2**args.binning,size],dtype=data_type)
+
+    tmp_file_name = f'{args.folder_name}/tile/tmp.h5'
     # Center search with using the first tile
     for itile in range(grid.shape[1]):
         data,flat,dark,theta = dxchange.read_aps_32id(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
@@ -50,8 +55,10 @@ def shift_manual(args):
         f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
         f.close()
-        
-    os.system(f'tomocupy recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
+    print(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
+            --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
+            --center-search-step {args.center_search_step}')
+    os.system(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
             --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
             --center-search-step {args.center_search_step}')            
     
@@ -59,9 +66,9 @@ def shift_manual(args):
     
     # find shift error
     arr_err = range(-args.shift_search_width,args.shift_search_width,args.shift_search_step)
-    data_all = np.ones([data_shape[0],2**args.binning*len(arr_err),size],dtype=data.dtype)
-    dark_all = np.zeros([1,2**args.binning*len(arr_err),size],dtype=data.dtype)
-    flat_all = np.ones([1,2**args.binning*len(arr_err),size],dtype=data.dtype)    
+    data_all = np.ones([data_shape[0],2**args.binning*len(arr_err),size],dtype=data_type)
+    dark_all = np.zeros([1,2**args.binning*len(arr_err),size],dtype=data_type)
+    flat_all = np.ones([1,2**args.binning*len(arr_err),size],dtype=data_type)    
     
     pdata_all = np.ones([len(arr_err),data_shape[1],size],dtype='float32')
     
@@ -101,16 +108,13 @@ def shift_manual(args):
         f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
         f.close()        
 
-        os.system(f'tomocupy recon --file-type double_fov --binning {args.binning} --reconstruction-type full \
+        os.system(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type full \
             --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {center} --nsino-per-chunk {args.nsino_per_chunk}')            
         
 
         print(x_shifts_res)
         sh = int(input(f"Please enter id for tile {jtile}: "))
         x_shifts_res[jtile]+=arr_err[sh]
-
-
-
 
     log.info(f'Center {center}')
     log.info(f'Relative shifts {x_shifts_res.tolist()}')

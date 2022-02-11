@@ -85,7 +85,7 @@ def extract_meta(fname):
 
 def extract_dict(fname):
 
-    tree, meta = read_dx_meta(fname)
+    tree, meta = read_hdf_meta(fname)
     sub_dict = {fname : meta}
 
     return sub_dict
@@ -184,6 +184,31 @@ def tile(args):
 
 
 # #####################################################################################
+def read_hdf_meta(fname, add_shape=True):
+    """
+    Get the tree view of a hdf/nxs file.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file.
+    add_shape : bool
+        Including the shape of a dataset to the tree if True.
+
+    Returns
+    -------
+    list of string
+    """
+
+    tree = deque()
+    meta = {}
+
+    with h5py.File(fname, 'r') as hdf_object:
+        _extract_hdf(tree, meta, hdf_object, add_shape=add_shape)
+    # for entry in tree:
+    #     print(entry)
+    return tree, meta
+
 def _get_subgroups(hdf_object, key=None):
     """
     Supplementary method for building the tree view of a hdf5 file.
@@ -248,10 +273,10 @@ def _add_branches(tree, meta, hdf_object, key, key1, index, last_index, prefix,
         prefix += PIPE_PREFIX
     else:
         prefix += SPACE_PREFIX
-    _make_tree_body(tree, meta, hdf_object, prefix=prefix, key=key_comb,
+    _extract_hdf(tree, meta, hdf_object, prefix=prefix, key=key_comb,
                     level=level, add_shape=add_shape)
 
-def _make_tree_body(tree, meta, hdf_object, prefix="", key=None, level=0,
+def _extract_hdf(tree, meta, hdf_object, prefix="", key=None, level=0,
                     add_shape=True):
     """
     Supplementary method for building the tree view of a hdf5 file.
@@ -278,27 +303,3 @@ def _make_tree_body(tree, meta, hdf_object, prefix="", key=None, level=0,
                 _add_branches(tree, meta, hdf_object, key, key1, index, last_index,
                               prefix, connector, level, add_shape)
 
-def read_dx_meta(fname, output=None, add_shape=True):
-    """
-    Get the tree view of a hdf/nxs file.
-
-    Parameters
-    ----------
-    file_path : str
-        Path to the file.
-    output : str or None
-        Path to the output file in a text-format file (.txt, .md,...).
-    add_shape : bool
-        Including the shape of a dataset to the tree if True.
-
-    Returns
-    -------
-    list of string
-    """
-    file_path = fname
-    hdf_object = h5py.File(file_path, 'r')
-    tree = deque()
-    meta = {}
-    _make_tree_body(tree, meta, hdf_object, add_shape=add_shape)
-
-    return tree, meta

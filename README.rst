@@ -73,13 +73,18 @@ Usage
   tile shift --folder-path /data/2021-12/Duchkov/mosaic --nsino-per-chunk 2 --binning 2 --center-search-width 10 --shift-search-width 30 --shift-search-step 2 --recon-engine tomocupy
   
 
-
 2. Stitch data
 ==============
 ::
 
   tile stitch --folder-name /data/2021-12/Duchkov/mosaic --nproj-per-chunk 128 --x-shifts "[0, 2452, 2448, 2446, 2448]" 
 
+Fro more options:
+::
+
+  tile -h
+  tile stitch -h
+  tile shift -h 
 
 5. Reconstruct
 ==============

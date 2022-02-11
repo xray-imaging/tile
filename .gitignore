@@ -143,3 +143,8 @@ Thumbs.db
 
 # custom
 log_*.rst
+*.log*
+*.tiff
+*.jpg
+*.png
+tmp

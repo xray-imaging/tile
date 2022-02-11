@@ -1,16 +1,25 @@
 import os
 import re
+import h5py
 import numpy as np
 import dxchange.reader as dxreader
 import dxchange
 
+from collections import OrderedDict, deque
 from pathlib import Path
 
 from mosaic import log
 
+PIPE = "│"
+ELBOW = "└──"
+TEE = "├──"
+PIPE_PREFIX = "│   "
+SPACE_PREFIX = "    "
+
 KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 SHIFTS_FILE_HEADER = '# Array shape: '
 
+__all__ = ['read_hdf_meta']
 
 def service_fnames(mosaic_fname):
 
@@ -59,30 +68,25 @@ def read_array(fname):
 
 def extract_meta(fname):
 
-    # list_to_extract = ('sample_x', 'sample_y', 'experimenter_name', 'full_file_name',  'sample_in_x', 'sample_in_y', 'proposal', 'sample_name', 'sample_y', 'camera_objective', 'resolution', 'energy', 'camera_distance', 'exposure_time', 'num_angles', 'scintillator_type', 'model')
-    list_to_extract = ('sample_x', 'sample_y', 'full_file_name', 'sample_name', 'resolution', 'camera_objective', 'num_angles', )
-
     if os.path.isdir(fname):
         # Add a trailing slash if missing
         top = os.path.join(fname, '')
         h5_file_list = list(filter(lambda x: x.endswith(('.h5', '.hdf')), os.listdir(top)))
         h5_file_list.sort()
         meta_dict = {}
-        file_counter=0
         for fname in h5_file_list:
             h5fname = top + fname
-            sub_dict = extract_dict(h5fname, list_to_extract, index=file_counter)
+            sub_dict = extract_dict(h5fname)
             meta_dict.update(sub_dict)
-            file_counter+=1
     else:
         log.error('No valid HDF5 file(s) fund')
         return None
 
     return meta_dict
 
-def extract_dict(fname, list_to_extract, index=0):
+def extract_dict(fname):
 
-    meta = dxreader.read_dx_meta(fname, label1='/measurement/instrument/sample_motor_stack/setup/', label2='/measurement/') 
+    tree, meta = read_hdf_meta(fname)
     sub_dict = {fname : meta}
 
     return sub_dict
@@ -104,7 +108,6 @@ def extract(args):
             meta_dict = extract_meta(args.folder_name)
 
             return meta_dict
-
         else:
             log.error("directory %s does not contain any file" % args.folder_name)
     else:
@@ -112,53 +115,47 @@ def extract(args):
         log.error("supported data formats are: %s, %s, %s, %s" % tuple(KNOWN_FORMATS))
 
 
-def sort(args):
-
-    meta_dict = extract(args)
-
-    log.warning('mosaic file sorted')
-    x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1]['sample_x'])}
-    y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1]['sample_y'])}
-
-    return y_sorted
-
 def tile(args):
     meta_dict = extract(args)
 
+    sample_x       = 'measurement_instrument_sample_motor_stack_setup_sample_x'
+    sample_y       = 'measurement_instrument_sample_motor_stack_setup_sample_y'
+    resolution     = 'measurement_instrument_detection_system_objective_resolution'
+    full_file_name = 'measurement_sample_full_file_name'
+
     log.warning('mosaic file sorted')
-    x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1]['sample_x'])}
-    y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1]['sample_y'])}
+    x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1][sample_x])}
+    y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1][sample_y])}
     
     first_key = list(y_sorted.keys())[0]
     second_key = list(y_sorted.keys())[1]
     # print(y_sorted)
     tile_index_x = 0
     tile_index_y = 0
-    x_start = y_sorted[first_key]['sample_x'][0] - 1
-    y_start = y_sorted[first_key]['sample_y'][0] - 1 
+    x_start = y_sorted[first_key][sample_x][0] - 1
+    y_start = y_sorted[first_key][sample_y][0] - 1 
 
-    x_shift = int((1000*(x_sorted[second_key]['sample_x'][0]- x_sorted[first_key]['sample_x'][0]))/y_sorted[first_key]['resolution'][0])
+    x_shift = int((1000*(x_sorted[second_key][sample_x][0]- x_sorted[first_key][sample_x][0]))/y_sorted[first_key][resolution][0])
     y_shift = 0
     
     tile_dict = {}
     
     for k, v in y_sorted.items():
-
-        if meta_dict[k]['sample_x'][0] > x_start:
+        if meta_dict[k][sample_x][0] > x_start:
             key = 'x' + str(tile_index_x) + 'y' + str(tile_index_y)
             # key = [str(tile_index_x),s tr(tile_index_y)]
-            log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k]['sample_x'][0], meta_dict[k]['sample_y'][0], k, meta_dict[k]['full_file_name'][0]))
+            log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k][sample_x][0], meta_dict[k][sample_y][0], k, meta_dict[k][full_file_name][0]))
             tile_index_x = tile_index_x + 1
-            x_start = meta_dict[k]['sample_x'][0]
-            first_y = meta_dict[k]['sample_y'][0]
+            x_start = meta_dict[k][sample_x][0]
+            first_y = meta_dict[k][sample_y][0]
         else:
             tile_index_x = 0
             tile_index_y = tile_index_y + 1
             key = 'x' + str(tile_index_x) + 'y' + str(tile_index_y)
-            log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k]['sample_x'][0], meta_dict[k]['sample_y'][0], k, meta_dict[k]['full_file_name'][0]))
+            log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k][sample_x][0], meta_dict[k][sample_y][0], k, meta_dict[k][full_file_name][0]))
             tile_index_x = tile_index_x + 1
-            x_start = y_sorted[first_key]['sample_x'][0] - 1
-            y_shift = int((1000*(meta_dict[k]['sample_y'][0] - first_y)/y_sorted[first_key]['resolution'][0]))
+            x_start = y_sorted[first_key][sample_x][0] - 1
+            y_shift = int((1000*(meta_dict[k][sample_y][0] - first_y)/y_sorted[first_key][resolution][0]))
 
         tile_dict[key] = k 
 
@@ -183,5 +180,127 @@ def tile(args):
     proj0, flat0, dark0, theta0, _ = dxchange.read_dx(grid[0,0], proj=(0, 1))
     data_shape = [len(theta0),*proj0.shape[1:]]
 
-    # print(f'{x_shift=},{y_shift=}')
-    return tile_dict, grid, data_shape, x_shift, y_shift
+    return meta_dict, grid, data_shape, x_shift, y_shift
+
+
+
+# #####################################################################################
+def read_hdf_meta(fname, add_shape=True):
+    """
+    Get the tree view of a hdf/nxs file.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file.
+    add_shape : bool
+        Including the shape of a dataset to the tree if True.
+
+    Returns
+    -------
+    list of string
+    """
+
+    tree = deque()
+    meta = {}
+
+    with h5py.File(fname, 'r') as hdf_object:
+        _extract_hdf(tree, meta, hdf_object, add_shape=add_shape)
+    # for entry in tree:
+    #     print(entry)
+    return tree, meta
+
+def _get_subgroups(hdf_object, key=None):
+    """
+    Supplementary method for building the tree view of a hdf5 file.
+    Return the name of subgroups.
+    """
+    list_group = []
+    if key is None:
+        for group in hdf_object.keys():
+            list_group.append(group)
+        if len(list_group) == 1:
+            key = list_group[0]
+        else:
+            key = ""
+    else:
+        if key in hdf_object:
+            try:
+                obj = hdf_object[key]
+                if isinstance(obj, h5py.Group):
+                    for group in hdf_object[key].keys():
+                        list_group.append(group)
+            except KeyError:
+                pass
+    if len(list_group) > 0:
+        list_group = sorted(list_group)
+    return list_group, key
+
+def _add_branches(tree, meta, hdf_object, key, key1, index, last_index, prefix,
+                  connector, level, add_shape):
+    """
+    Supplementary method for building the tree view of a hdf5 file.
+    Add branches to the tree.
+    """
+    shape = None
+    key_comb = key + "/" + key1
+    if add_shape is True:
+        if key_comb in hdf_object:
+            try:
+                obj = hdf_object[key_comb]
+                if isinstance(obj, h5py.Dataset):
+                    shape = str(obj.shape)
+                    if obj.shape[0]==1:
+                        s = obj.name.split('/')
+                        name = "_".join(s)[1:]
+                        # print(s)
+                        # print(name)
+                        value = obj[()][0]
+                        attr = obj.attrs.get('units')
+                        if attr != None:
+                            attr = attr.decode('UTF-8')
+                            # log.info(">>>>>> %s: %s %s" % (obj.name, value, attr))
+                        if  (value.dtype.kind == 'S'):
+                            value = value.decode(encoding="utf-8")
+                            # log.info(">>>>>> %s: %s" % (obj.name, value))
+                        meta.update( {name : [value, attr] } )
+            except KeyError:
+                shape = str("-> ???External-link???")
+    if shape is not None:
+        tree.append(f"{prefix}{connector} {key1} {shape}")
+    else:
+        tree.append(f"{prefix}{connector} {key1}")
+    if index != last_index:
+        prefix += PIPE_PREFIX
+    else:
+        prefix += SPACE_PREFIX
+    _extract_hdf(tree, meta, hdf_object, prefix=prefix, key=key_comb,
+                    level=level, add_shape=add_shape)
+
+def _extract_hdf(tree, meta, hdf_object, prefix="", key=None, level=0,
+                    add_shape=True):
+    """
+    Supplementary method for building the tree view of a hdf5 file.
+    Create the tree body.
+    """
+    entries, key = _get_subgroups(hdf_object, key)
+    num_ent = len(entries)
+    last_index = num_ent - 1
+    level = level + 1
+    if num_ent > 0:
+        if last_index == 0:
+            key = "" if level == 1 else key
+            if num_ent > 1:
+                connector = PIPE
+            else:
+                connector = ELBOW if level > 1 else ""
+            _add_branches(tree, meta, hdf_object, key, entries[0], 0, 0, prefix,
+                          connector, level, add_shape)
+        else:
+            for index, key1 in enumerate(entries):
+                connector = ELBOW if index == last_index else TEE
+                if index == 0:
+                    tree.append(prefix + PIPE)
+                _add_branches(tree, meta, hdf_object, key, key1, index, last_index,
+                              prefix, connector, level, add_shape)
+

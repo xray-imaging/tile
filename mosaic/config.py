@@ -13,9 +13,6 @@ from mosaic import util
 LOGS_HOME = Path.home()/'logs'
 CONFIG_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'mosaic.conf')
 
-SHIFT_H_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'shifts_h.txt')
-SHIFT_V_FILE_NAME = os.path.join(str(pathlib.Path.home()), 'shifts_v.txt')
-
 SECTIONS = OrderedDict()
 
 SECTIONS['general'] = {
@@ -30,7 +27,7 @@ SECTIONS['general'] = {
         'help': "Log file directory",
         'metavar': 'FILE'},
     'verbose': {
-        'default': True,
+        'default': False,
         'help': 'Verbose output',
         'action': 'store_true'},
         }
@@ -50,47 +47,62 @@ SECTIONS['file-io'] = {
         'default': 0.5,
         'type': float,
         'help': 'Location of the sinogram used for slice reconstruction and find axis (0 top, 1 bottom)'},
+    'nproj': {
+        'default': 0.5,
+        'type': float,
+        'help': 'Location of the projection used for testing shifts between tiles (0 top, 1 bottom)'},
     'binning': {
         'type': util.positive_int,
         'default': 0,
         'help': "Reconstruction binning factor as power(2, choice)",
         'choices': [0, 1, 2, 3]},
-    # 'shifts-h': {
-    #     'default': SHIFT_H_FILE_NAME,
-    #     'type': str,
-    #     'help': "File name storing the horizontal shifts",
-    #     'metavar': 'FILE'},
-    # 'shifts-v': {
-    #     'default': SHIFT_V_FILE_NAME,
-    #     'type': str,
-    #     'help': "File name storing the vertical shifts",
-    #     'metavar': 'FILE'},
-    'chunk-size': {     
+    'nproj-per-chunk': {     
         'type': int,
         'default': 64,
-        'help': "Number of of projections for simultaneous processing",},
-    'threshold': {
-        'default': 0.5,
-        'type': float,
-        'help': 'Threshold for selecting matching features (0,1)'},
+        'help': "Number of of projections for simultaneous processing",},    
+    'nsino-per-chunk': {     
+        'type': int,
+        'default': 8,
+        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory. ",},    
        }
 
 SECTIONS['stitch'] = {
-    'test': {
-        'default': False,
-        'help': 'if set one projection called mosaic_test will be stitched and placed in raw data folded'},
-    'proj': {     
-        'type': int,
+    'x-shifts': {
+        'default': 'None',
+        'type': str,
+        'help': "Projection pairs to find rotation axis. Each second projection in a pair will be flipped and used to find shifts from the first element in a pair. The shifts are used to calculate the center.  Example [0,1499] for a 180 deg scan, or [0,1499,749,2249] for 360, etc.",},            
+    'start-proj': {
         'default': 0,
-        'help': "Projection used for the stitching test"},
+        'type': int,
+        'help': "Start projection"},
+    'end-proj': {
+        'default': -1,
+        'type': int,
+        'help': "End projection"},
        }
 
+
 SECTIONS['shift'] = {
-    'mode': {
-        'default': 'manual',
-        'type' : str,
-        'choices': ['auto', 'manual'],
-        'help': 'Select the shift mode'},
+    'rotation-axis': {
+        'default': -1.0,
+        'type': float,
+        'help': "Location of rotation axis"},
+    'center-search-width': {
+        'type': float,
+        'default': 10.0,
+        'help': "+/- center search width (pixel). "},
+    'center-search-step': {
+        'type': float,
+        'default': 0.5,
+        'help': "+/- center search step (pixel). "},
+    'shift-search-width': {
+        'type': int,
+        'default': 20,
+        'help': "+/- center search width (pixel). "},
+    'shift-search-step': {
+        'type': int,
+        'default': 1,
+        'help': "+/- center search step (pixel). "},
     }
 
 MOSAIC_PARAMS = ('file-io', 'stitch')

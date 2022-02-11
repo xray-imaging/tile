@@ -114,5 +114,4 @@ For more options:
 Test dataset
 ============
 
-Using a `Foam dataset <https://tomobank.readthedocs.io/en/latest/source/data/docs.data.tomosaic.html#foam>`_  
-from `tomobank <https://tomobank.readthedocs.io/en/latest/index.html>`_.
+For testing use the `Foam dataset <https://tomobank.readthedocs.io/en/latest/source/data/docs.data.tomosaic.html#foam>`_ from `tomobank <https://tomobank.readthedocs.io/en/latest/index.html>`_.

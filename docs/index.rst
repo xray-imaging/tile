@@ -28,5 +28,6 @@ Highlights
    source/about
    source/install
    source/usage
+   source/test
    source/api
    source/credits

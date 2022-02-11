@@ -1,18 +1,15 @@
 from setuptools import setup, find_packages
-from setuptools.command.install import install
-import os
 
 
 setup(
-    name='mosaic',
+    name='tile',
     version=open('VERSION').read().strip(),
-    #version=__version__,
-    author='Francesco De Carlo',
-    author_email='decarlof@gmail.com',
-    url='https://github.com/decarlof/mosaic',
+    author='Viktor Nikitin, Francesco De Carlo',
+    author_email='vnikitin@anl.gov',
+    url='https://github.com/xray-imaging/tile',
     packages=find_packages(),
     include_package_data = True,
-    scripts=['bin/mosaic'],
-    description='cli to process mosaic tomography data',
+    scripts=['bin/tile'],
+    description='cli for stitching tomographic data',
     zip_safe=False,
 )

@@ -1,14 +1,15 @@
+=============
 API reference
 =============
 
-.. rubric:: **mosaic Modules:**
+.. rubric:: **tile Modules:**
 
 .. toctree::
 
-   api/mosaic.fileio
+   api/tile.fileio
 
 
-.. automodule:: mosaic
+.. automodule:: tile
    :members:
    :undoc-members:
    :show-inheritance: 

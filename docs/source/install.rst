@@ -18,17 +18,17 @@ then install tile
   cd tile
   python setup.py install
 
-============
+
 Requirements
 ============
 
 Besides the listed `requirements <https://github.com/xray-imaging/mosaic/blob/main/requirements.txt>`_, **tile** uses `tomopy <https://tomopy.readthedocs.io/en/latest/>`_ or, if you have a GPU available in your system, `tomocupy <https://tomocupy.readthedocs.io/en/latest/>`_ to perform the tomographic reconstruction after the stitching step. 
 
 Install tomocupy
-================
+~~~~~~~~~~~~~~~~
 
 1. Install the pytorch pywavelets package for ring removal
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ::
 
   git clone https://github.com/fbcotter/pytorch_wavelets
@@ -37,14 +37,14 @@ Install tomocupy
   cd -
 
 2. Set path to the nvcc profiler (e.g. /local/cuda-11.4/bin/nvcc)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ::
 
   export CUDACXX=/local/cuda-11.4/bin/nvcc 
 
 
 3. Install tomocupy
-~~~~~~~~~~~~~~~~~~~
+
 ::
 
   git clone https://github.com/nikitinvv/tomocupy-cli

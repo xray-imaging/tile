@@ -186,7 +186,10 @@ def read_hdf_meta(fname, add_shape=True):
 
     Returns
     -------
-    list of string
+    meta : dict
+        A dictionary containing all hdf file meta data
+    tree : list
+        A list of string containing the hdf file tree structure
     """
 
     tree = deque()
@@ -201,7 +204,7 @@ def read_hdf_meta(fname, add_shape=True):
 def _get_subgroups(hdf_object, key=None):
     """
     Supplementary method for building the tree view of a hdf5 file.
-    Return the name of subgroups.
+    Return the name of subgroups :cite:`Vo:21`.
     """
     list_group = []
     if key is None:
@@ -228,7 +231,7 @@ def _add_branches(tree, meta, hdf_object, key, key1, index, last_index, prefix,
                   connector, level, add_shape):
     """
     Supplementary method for building the tree view of a hdf5 file.
-    Add branches to the tree.
+    Add branches to the tree :cite:`Vo:21`.
     """
     shape = None
     key_comb = key + "/" + key1
@@ -269,7 +272,7 @@ def _extract_hdf(tree, meta, hdf_object, prefix="", key=None, level=0,
                     add_shape=True):
     """
     Supplementary method for building the tree view of a hdf5 file.
-    Create the tree body.
+    Create the tree body :cite:`Vo:21`..
     """
     entries, key = _get_subgroups(hdf_object, key)
     num_ent = len(entries)

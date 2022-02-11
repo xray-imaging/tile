@@ -1,7 +1,7 @@
-:mod:`mosaic.fileio`
-====================
+:mod:`tile.stitch`
+==================
 
-.. automodule:: mosaic.fileio
+.. automodule:: tile.stitch
    :members:
    :show-inheritance:
    :undoc-members:
@@ -10,4 +10,4 @@
 
    .. autosummary::
    
-      read_hdf_meta
+      stitching

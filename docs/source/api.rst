@@ -7,6 +7,8 @@ API reference
 .. toctree::
 
    api/tile.fileio
+   api/tile.shift
+   api/tile.stitch
 
 
 .. automodule:: tile

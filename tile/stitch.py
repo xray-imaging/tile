@@ -1,10 +1,12 @@
-from tile import log
-from tile import fileio
-import numpy as np
+import os
 import h5py
 import dxchange
-import os
+import numpy as np
 
+from tile import log
+from tile import fileio
+
+__all__ = ['stitching']
 
 def stitching(args):
     """Stitching projection tiles in horizontal direction"""

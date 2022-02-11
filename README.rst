@@ -86,7 +86,7 @@ Fro more options:
   tile stitch -h
   tile shift -h 
 
-5. Reconstruct
+3. Reconstruct
 ==============
 
 Once the stitching is completed the tomographic reconstruction can be done with `tomocupy <https://tomocupy.readthedocs.io/en/latest/>`_ or `tomopy <https://tomopy.readthedocs.io/en/latest/>`_/`tomopycli <https://tomopycli.readthedocs.io/en/latest/>`_ 
@@ -108,3 +108,11 @@ For more options:
 
   tomocupy -h
   tomopy -h
+
+
+============
+Test dataset
+============
+
+Using a `Foam dataset <https://tomobank.readthedocs.io/en/latest/source/data/docs.data.tomosaic.html#foam>`_  
+from `tomobank <https://tomobank.readthedocs.io/en/latest/index.html>`_.

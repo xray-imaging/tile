@@ -102,7 +102,7 @@ with **tomopy**
   tomopy recon --file-name /data/2021-11/Banerjee/ROM_R_3474_072.h5 --rotation-axis 339 --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning 0 --nsino-per-chunk 8 --rotation-axis-auto manual
 
 
-For more options see:
+For more options:
 
 ::
 

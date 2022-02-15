@@ -85,6 +85,7 @@ Usage
 1. Verify the dataset is valid
 ==============================
 ::
+
     (tile)$ tile info --folder-name /local/data/mosaic/mosaic/
     2022-02-15 17:13:17,505 - Started tile
     2022-02-15 17:13:17,505 - Saving log at /home/beams/FAST/logs/tile_2022-02-15_17_13_17.log

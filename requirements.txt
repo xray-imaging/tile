@@ -1,10 +1,5 @@
-numpy
-pandas
+dxfile
 dxchange
 h5py
-scipy
-tomopy
-libopencv
-opencv
-py-opencv
-tifffile
+numpy
+pandas

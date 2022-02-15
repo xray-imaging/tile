@@ -6,21 +6,21 @@ Usage
 ==================================
 ::
 
-  tile shift --folder-path /data/2021-12/Duchkov/mosaic --nsino-per-chunk 2 --binning 2 --center-search-width 10 --shift-search-width 30 --shift-search-step 2 --recon-engine tomocupy
+    (tile)$ tile shift --folder-path /data/2021-12/Duchkov/mosaic --nsino-per-chunk 2 --binning 2 --center-search-width 10 --shift-search-width 30 --shift-search-step 2 --recon-engine tomocupy
   
 
 2. Stitch data
 ==============
 ::
 
-  tile stitch --folder-name /data/2021-12/Duchkov/mosaic --nproj-per-chunk 128 --x-shifts "[0, 2452, 2448, 2446, 2448]" 
+    (tile)$ tile stitch --folder-name /data/2021-12/Duchkov/mosaic --nproj-per-chunk 128 --x-shifts "[0, 2452, 2448, 2446, 2448]" 
 
 Fro more options:
 ::
 
-  tile -h
-  tile stitch -h
-  tile shift -h 
+    (tile)$ tile -h
+    (tile)$ tile stitch -h
+    (tile)$ tile shift -h 
 
 3. Reconstruct
 ==============
@@ -30,17 +30,17 @@ Once the stitching is completed the tomographic reconstruction can be done with 
 with **tomocupy**
 ::
  
-  tomocupy recon --file-name /data/2021-11/Banerjee/ROM_R_3474_072.h5 --rotation-axis 339 --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning 0 --nsino-per-chunk 8 --rotation-axis-auto manual
+    (tile)$ tomocupy recon --file-name /data/2021-11/Banerjee/ROM_R_3474_072.h5 --rotation-axis 339 --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning 0 --nsino-per-chunk 8 --rotation-axis-auto manual
 
 with **tomopy**
 ::
  
-  tomopy recon --file-name /data/2021-11/Banerjee/ROM_R_3474_072.h5 --rotation-axis 339 --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning 0 --nsino-per-chunk 8 --rotation-axis-auto manual
+    (tile)$ tomopy recon --file-name /data/2021-11/Banerjee/ROM_R_3474_072.h5 --rotation-axis 339 --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning 0 --nsino-per-chunk 8 --rotation-axis-auto manual
 
 
 For more options:
 
 ::
 
-  tomocupy -h
-  tomopy -h
+    (tile)$ tomocupy -h
+    (tile)$ tomopy -h

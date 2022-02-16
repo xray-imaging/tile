@@ -174,7 +174,6 @@ def get_config_name():
 
     return name
 
-
 def parse_known_args(parser, subparser=False):
     """
     Parse arguments from file and then override by the ones specified on the
@@ -190,7 +189,7 @@ def parse_known_args(parser, subparser=False):
         values = ""
 
     return parser.parse_known_args(values)[0]
-
+    
 
 def config_to_list(config_name=CONFIG_FILE_NAME):
     """
@@ -273,23 +272,6 @@ def write(config_file, args=None, sections=None):
         config.write(f)
 
 
-def log_values(args):
-    """Log all values set in the args namespace.
-
-    Arguments are grouped according to their section and logged alphabetically
-    using the DEBUG log level thus --verbose is required.
-    """
-    args = args.__dict__
-
-    for section, name in zip(SECTIONS, NICE_NAMES):
-        entries = sorted((k for k in args.keys() if k in SECTIONS[section]))
-        if entries:
-            log.info(name)
-            for entry in entries:
-                value = args[entry] if args[entry] is not None else "-"
-                log.info("  {:<16} {}".format(entry, value))
-
-
 def show_config(args):
     """Log all values set in the args namespace.
 
@@ -300,8 +282,9 @@ def show_config(args):
 
     log.warning('tile status start')
     for section, name in zip(SECTIONS, NICE_NAMES):
-        entries = sorted((k for k in args.keys() if k.replace('_', '-') in SECTIONS[section]))
+        entries = sorted((k for k in args.keys() if k.replace('_', '-') in SECTIONS[section]))        
         if entries:
+            log.info(name)
             for entry in entries:
                 value = args[entry] if args[entry] != None else "-"
                 log.info("  {:<16} {}".format(entry, value))

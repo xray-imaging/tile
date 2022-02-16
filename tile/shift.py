@@ -72,9 +72,18 @@ def shift_manual(args):
         step = -1
     else:
         step = 1
+    
+    if args.rotation_axis==-1:
+        args.rotation_axis = data_shape[2]//2
+    
+    if args.recon_engine == 'tomocupy':
+        postf = 'gpu'
+    else:
+        postf = ""
+
     # ids for slice and projection for shifts testing
     idslice = int((data_shape[1]-1)*args.nsino)
-    idproj = int((data_shape[0]-1)*args.nproj)
+    idproj = int((data_shape[0]-1)*args.nprojection)
 
     # data size after stitching
     size = int(np.ceil((data_shape[2]+(grid.shape[1]-1)*x_shift)/2**(args.binning+1))*2**(args.binning+1))
@@ -107,8 +116,12 @@ def shift_manual(args):
             --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
             --center-search-step {args.center_search_step}')            
     
-    center = input("Please enter rotation center: ")
     
+    try_path = f"{os.path.dirname(tmp_file_name)}_rec{postf}/try_center/tmp/recon*"
+    log.info(f'Please open the stack of images from {try_path} and select the rotation center')
+    center = input(f"Please enter rotation center ({args.rotation_axis}): ")
+    if center is not None:        
+        args.rotation_axis = center
     # find shift error
     arr_err = range(-args.shift_search_width,args.shift_search_width,args.shift_search_step)
     data_all = np.ones([data_shape[0],2**args.binning*len(arr_err),size],dtype=data_type)
@@ -145,7 +158,7 @@ def shift_manual(args):
         basename = os.path.basename(tmp_file_name)
         if not os.path.exists(dirPath):
             os.makedirs(dirPath)
-        dxchange.write_tiff_stack(pdata_all,f'{dir}_recgpu/{basename[:-3]}_proj/p',overwrite=True)        
+        dxchange.write_tiff_stack(pdata_all,f'{dir}_rec{postf}/{basename[:-3]}_proj/p',overwrite=True)        
         f = dx.File(tmp_file_name, mode='w') 
         f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
@@ -154,14 +167,18 @@ def shift_manual(args):
         f.close()        
 
         os.system(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type full \
-            --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {center} --nsino-per-chunk {args.nsino_per_chunk}')            
+            --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --nsino-per-chunk {args.nsino_per_chunk}')            
+        
+        try_path = f"{os.path.dirname(tmp_file_name)}_rec{postf}/tmp_rec/recon*"
+        tryproj_path = f"{dir}_rec{postf}/{basename[:-3]}_proj/p*"
+        print(f'Please open the stack of images from reconstructions {try_path} or stitched projections {tryproj_path}, and select the file id to shift tile {jtile}')
+        sh = int(input(f"Please enter id for tile {jtile}: "))
+        
+        x_shifts_res[jtile]+=arr_err[sh]
+        log.info(f'Current shifts: {x_shifts_res}')
         
 
-        print(x_shifts_res)
-        sh = int(input(f"Please enter id for tile {jtile}: "))
-        x_shifts_res[jtile]+=arr_err[sh]
-
-    log.info(f'Center {center}')
+    log.info(f'Center {args.rotation_axis}')
     log.info(f'Relative shifts {x_shifts_res.tolist()}')
         
             

@@ -37,7 +37,7 @@ Usage
 ==================================
 ::
 
-    (tile)$ tile shift --folder-path /data/2021-12/Duchkov/mosaic --nsino-per-chunk 2 --binning 2 --center-search-width 10 --shift-search-width 30 --shift-search-step 2 --recon-engine tomocupy
+    (tile)$ tile shift --folder-name /data/2021-12/Duchkov/mosaic --nsino-per-chunk 2 --binning 2 --center-search-width 10 --shift-search-width 30 --shift-search-step 2 --recon-engine tomocupy
   
 
 3. Stitch data

@@ -5,7 +5,13 @@ Usage
 1. Verify the dataset is valid
 ==============================
 
-It is assumed that the tomographic data are stored in an hdf file compliant with `dxfile <https://dxfile.readthedocs.io/en/latest/index.html>`_ and that the X-Y location of each tile, the microscope objective magnification and the full file name are stored in the hdf file at data collection time with the following layout:
+Tile needs the following experiment meta data to automatically sort the mosaic tiles by location and set the initial overlapping conditions:
+
+#. X-Y location of each tile in mm
+#. the projection image pixel size in microns
+#. the tile data set full file name
+
+At the APS beamline 2-BM, these meta data are automatically stored at data collection time in an hdf file compliant with `dxfile <https://dxfile.readthedocs.io/en/latest/index.html>`_ following this layout:
 
 
 .. image:: img/hdf_00.png
@@ -26,18 +32,25 @@ It is assumed that the tomographic data are stored in an hdf file compliant with
 #. full_file_name         = '/measurement/sample/full_file_name'
 
 
-If these parameters are stored somewhere else in the hdf file, you can set their new location at runtime using the 
---sample-x, --sample-y, --resolution --full-file-name. By default these are set to:
+If these parameters are stored somewhere else in your hdf file, you can set their locations at runtime using the 
+--sample-x, --sample-y, --resolution --full-file-name options. 
+
+#. --sample-x 'your_hdf_path_to_sample_x_in_mm'
+#. --sample-y 'your_hdf_path_to_sample_y_in_mm'
+#. --resolution 'your_hdf_path_to_image_resolution_in_micron'
+#. --full-file-name 'your_hdf_path_to_the_file_name'
 
 
-#. sample_x       = 'measurement_instrument_sample_motor_stack_setup_sample_x'
-#. sample_y       = 'measurement_instrument_sample_motor_stack_setup_sample_y'
-#. resolution     = 'measurement_instrument_detection_system_objective_resolution'
-#. full_file_name = 'measurement_sample_full_file_name'
+By default, these are set to:
 
-to meet the `dxfile <https://dxfile.readthedocs.io/en/latest/index.html>`_ definition but can be change to match your layout.
+#. --sample-x 'measurement_instrument_sample_motor_stack_setup_sample_x'
+#. --sample-y 'measurement_instrument_sample_motor_stack_setup_sample_y'
+#. --resolution 'measurement_instrument_detection_system_objective_resolution'
+#. --full-file-name 'measurement_sample_full_file_name'
 
-Once the above is confirmed you can validate the mosaic data set with:
+to meet the `dxfile <https://dxfile.readthedocs.io/en/latest/index.html>`_ definition.
+
+Once the above are confirmed, you can validate the mosaic data set with:
 ::
 
     (tile)$ tile info --folder-name /data/2021-12/Duchkov/mosaic/
@@ -61,7 +74,7 @@ Once the above is confirmed you can validate the mosaic data set with:
 2. Find rotation center
 =======================
 
-The first step is to find the location of the rotation axis of the stitched data set. The command below, **tile center**, will stitch the projections horizontally usingas first approximation, the nominal overlap distance stored in the hdf file and will then generate a stack containing the same reconstructed slice (default slice is vertically in the center, adjustable with --nsino) with location of the rotation axis +/- 50 pixel around the middle of the horizontal size of the detector with steps of 0.25 pixels. The stack of reconstructed slice will be done using tomocupy.
+The first step is to find the location of the rotation axis of the stitched data set. The command below, **tile center**, will stitch the projections horizontally using, as first approximation, the nominal overlap distance stored in the hdf file and will then generate a stack of reconstructed images containing the same slice (default slice is vertically in the center, adjustable with --nsino) with location of the rotation axis +/- 50 pixel around the middle of the horizontal size of the detector with steps of 0.25 pixels. The stack of reconstructed slice will be done using tomocupy.
 
 ::
 
@@ -108,14 +121,14 @@ until the center of the image is sharp and free of artifacts:
    :width: 720px
    :alt: project
 
-On the top left corner of the image you will see the corresponding rotation axis location, 1246 in this case. Store this for the next step.
+Please focus only on the center of the image for now. Once done, on the top left corner of the image you will see the corresponding rotation axis location, 1246 in this case. Store this for the next step.
 
 3. Tile Shift
 =============
 
-During the find rotation center step, **tile center** used the nominal tile overlap distance stored in the hdf file. In this step, **tile shift** will fine tune each tile location. This process will keep the center tile fixed and slide one at the time each of the tiles moving away from the center tile.
+**tile center** used the nominal tile overlap distance stored in the hdf file. In this step, **tile shift** will fine tune each tile location. This process will keep the center tile fixed and slide one at the time each of the tiles moving away from the center tile.
 
-The optimal tile locations will be determined looking at reconstructed slices or at projections generated by sliding the overlap region along a preset --shift-search-width in steps of --shift-search-step pixel size. The command below will shift the tiles, one at the time, by +/- 30 pixel from the nominal location stored in the hdf file at data collection time, in step of 2 pixels.
+The optimal tile locations will be determined looking at reconstructed slices or at projections generated by sliding the overlap region along a preset --shift-search-width in steps of --shift-search-step pixels. The command below will shift the tiles, one at the time, by +/- 30 pixel from the nominal location stored in the hdf file at data collection time, in step of 2 pixels.
 
 ::
 
@@ -207,7 +220,7 @@ Repeat the `Fiji ImageJ <https://imagej.net/software/fiji/>`_ image inspection l
 4. Tile Stitch 
 ==============
 
-At the end of **tile shift** step, we obtain a list of shifts [0, 2450, 2450, 2452, 2454] that we can use for the final tile stiching:
+At the end of **tile shift** step, we obtain a list of shifts [0, 2450, 2450, 2452, 2454] that we can use for the final tile stiching. **tile stitch** will generate a single hdf file merging all mosaic tiles with the correct overlap.
 
 ::
 

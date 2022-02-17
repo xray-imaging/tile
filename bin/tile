@@ -39,6 +39,9 @@ def run_info(args):
     columns = [f'y_{num}' for num in range(grid.shape[1])]
     log.info('tile file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
 
+def run_center(args):
+    shift.center(args)
+
 def run_shift(args):
     shift.shift_manual(args)
 
@@ -50,6 +53,7 @@ def main():
     parser.add_argument('--config', **config.SECTIONS['general']['config'])
     show_params     = config.ALL_PARAMS
     info_params     = config.INFO_PARAMS
+    center_params   = config.CENTER_PARAMS
     shift_params    = config.SHIFT_PARAMS
     stitch_params   = config.STITCH_PARAMS
 
@@ -57,6 +61,7 @@ def main():
         ('init',        init,           (),                 "Create configuration file"),
         ('status',      status,         show_params,        "Show the tile-cli status"),
         ('info',        run_info,       info_params,        "Show the file names in tile  location"),
+        ('center',      run_center,     center_params,      "Find the rotation axis location"),
         ('shift',       run_shift,      shift_params,       "Calculate the tile horizonal shifts"),
         ('stitch',      run_stitch,     stitch_params,      "Create a single hdf file containing the tile datasets"),
     ]

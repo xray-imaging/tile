@@ -53,10 +53,11 @@ from tile import fileio
 
 __all__ = ['shift_manual']
 
-def shift_manual(args):
-    """Find shifts between horizontal tiles"""
 
-    log.info('Run manual shift')
+def center(args):
+    """Find rotation axis location"""
+
+    log.info('Run find rotation axis location')
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
 
@@ -91,7 +92,11 @@ def shift_manual(args):
     dark_all = np.zeros([1,2**args.binning,size],dtype=data_type)
     flat_all = np.ones([1,2**args.binning,size],dtype=data_type)
 
-    tmp_file_name = f'{args.folder_name}/tile/tmp.h5'
+    tmp_file_name = f'{args.folder_name}{args.tmp_file_name}'
+    dirPath = os.path.dirname(tmp_file_name)
+    if not os.path.exists(dirPath):
+        os.makedirs(dirPath)
+
     # Center search with using the first tile
     for itile in range(grid.shape[1]):
         data,flat,dark,theta = dxchange.read_aps_32id(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
@@ -100,25 +105,91 @@ def shift_manual(args):
         data_all[:,:,st:end] = data[:,:,::step]
         dark_all[:,:,st:end] = np.mean(dark[:,:,::step],axis=0)
         flat_all[:,:,st:end] = np.mean(flat[:,:,::step],axis=0)
-        dirPath = os.path.dirname(tmp_file_name)
-        if not os.path.exists(dirPath):
-            os.makedirs(dirPath)
         f = dx.File(tmp_file_name, mode='w') 
         f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
         f.close()
-    print(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
-            --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
-            --center-search-step {args.center_search_step}')
+    log.info(f'Created a temporary hdf file: {tmp_file_name}')
+    log.warning(f'Running: {args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --center-search-step {args.center_search_step}')
     os.system(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
             --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
             --center-search-step {args.center_search_step}')            
     
-    
     try_path = f"{os.path.dirname(tmp_file_name)}_rec{postf}/try_center/tmp/recon*"
     log.info(f'Please open the stack of images from {try_path} and select the rotation center')
+
+
+def shift_manual(args):
+    """Find shifts between horizontal tiles"""
+
+    log.info('Run manual shift')
+    # read files grid and retrieve data sizes
+    meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
+
+    log.info('image   size (x, y) in pixels: (%d, %d)' % (data_shape[2], data_shape[1]))
+    log.info('stitch shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
+    log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
+
+    # check if flip is needed for having tile[0,0] as the left one and at sample_x=0
+    sample_x = 'measurement_instrument_sample_motor_stack_setup_sample_x'
+    x0 = meta_dict[grid[0,0]][sample_x][0]
+    x1 = meta_dict[grid[0,-1]][sample_x][0]
+    if(x0+x1>0):
+        step = -1
+    else:
+        step = 1
+    
+    # if args.rotation_axis==-1:
+    #     args.rotation_axis = data_shape[2]//2
+    
+    if args.recon_engine == 'tomocupy':
+        postf = 'gpu'
+    else:
+        postf = ""
+
+    # ids for slice and projection for shifts testing
+    idslice = int((data_shape[1]-1)*args.nsino)
+    idproj = int((data_shape[0]-1)*args.nprojection)
+
+    # data size after stitching
+    size = int(np.ceil((data_shape[2]+(grid.shape[1]-1)*x_shift)/2**(args.binning+1))*2**(args.binning+1))
+    data_all = np.ones([data_shape[0],2**args.binning,size],dtype=data_type)
+    dark_all = np.zeros([1,2**args.binning,size],dtype=data_type)
+    flat_all = np.ones([1,2**args.binning,size],dtype=data_type)
+
+    tmp_file_name = f'{args.folder_name}/tile/tmp.h5'
+    dirPath = os.path.dirname(tmp_file_name)
+    if not os.path.exists(dirPath):
+        os.makedirs(dirPath)
+    # # Center search with using the first tile
+    # for itile in range(grid.shape[1]):
+    #     data,flat,dark,theta = dxchange.read_aps_32id(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
+    #     st = itile*x_shift
+    #     end = st+data_shape[2]
+    #     data_all[:,:,st:end] = data[:,:,::step]
+    #     dark_all[:,:,st:end] = np.mean(dark[:,:,::step],axis=0)
+    #     flat_all[:,:,st:end] = np.mean(flat[:,:,::step],axis=0)
+    #     dirPath = os.path.dirname(tmp_file_name)
+    #     if not os.path.exists(dirPath):
+    #         os.makedirs(dirPath)
+    #     f = dx.File(tmp_file_name, mode='w') 
+    #     f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
+    #     f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
+    #     f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
+    #     f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
+    #     f.close()
+    # print(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
+    #         --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
+    #         --center-search-step {args.center_search_step}')
+    # os.system(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
+    #         --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
+    #         --center-search-step {args.center_search_step}')            
+    
+    
+    # try_path = f"{os.path.dirname(tmp_file_name)}_rec{postf}/try_center/tmp/recon*"
+    # log.info(f'Please open the stack of images from {try_path} and select the rotation center')
     center = input(f"Please enter rotation center ({args.rotation_axis}): ")
     if center is not None:        
         args.rotation_axis = center
@@ -133,9 +204,9 @@ def shift_manual(args):
     x_shifts_res = np.zeros(grid.shape[1],'int')
     x_shifts_res[1:] = x_shift
     for jtile in range(1,grid.shape[1]):        
-        data_all[:] = 1
-        flat_all[:] = 1
-        dark_all[:] = 0
+        data_all[:]  = 1
+        flat_all[:]  = 1
+        dark_all[:]  = 0
         pdata_all[:] = 1
         
         for ishift,err_shift in enumerate(arr_err):

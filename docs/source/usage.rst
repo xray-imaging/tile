@@ -4,6 +4,40 @@ Usage
 
 1. Verify the dataset is valid
 ==============================
+
+It is assumed that the tomographic data are stored in an hdf file compliant with `dxfile <https://dxfile.readthedocs.io/en/latest/index.html>`_ and that the X-Y location of each tile, the microscope objective magnification and the full file name are stored in the hdf file at data collection time with the following layout:
+
+
+.. image:: img/hdf_00.png
+   :width: 200px
+   :alt: project
+
+.. image:: img/hdf_01.png
+   :width: 200px
+   :alt: project
+
+.. image:: img/hdf_02.png
+   :width: 200px
+   :alt: project
+
+#. sample_x  (mm)         = '/measurement/instrument/sample_motor_stack/setup/sample_x'
+#. sample_y  (mm)         = '/measurement/instrument/sample_motor_stack/setup/sample_y'
+#. resolution (micron)    = '/measurement/instrument/detection_system/objective/resolution'
+#. full_file_name         = '/measurement/sample/full_file_name'
+
+
+If these parameters are stored somewhere else in the hdf file, you can set their new location at runtime using the 
+--sample-x, --sample-y, --resolution --full-file-name. By default these are set to:
+
+
+#. sample_x       = 'measurement_instrument_sample_motor_stack_setup_sample_x'
+#. sample_y       = 'measurement_instrument_sample_motor_stack_setup_sample_y'
+#. resolution     = 'measurement_instrument_detection_system_objective_resolution'
+#. full_file_name = 'measurement_sample_full_file_name'
+
+to meet the `dxfile <https://dxfile.readthedocs.io/en/latest/index.html>`_ definition but can be change to match your layout.
+
+Once the above is confirmed you can validate the mosaic data set with:
 ::
 
     (tile)$ tile info --folder-name /data/2021-12/Duchkov/mosaic/

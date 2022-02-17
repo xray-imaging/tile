@@ -151,10 +151,10 @@ def extract(args):
 def tile(args):
     meta_dict = extract(args)
 
-    sample_x       = 'measurement_instrument_sample_motor_stack_setup_sample_x'
-    sample_y       = 'measurement_instrument_sample_motor_stack_setup_sample_y'
-    resolution     = 'measurement_instrument_detection_system_objective_resolution'
-    full_file_name = 'measurement_sample_full_file_name'
+    sample_x       = args.sample_x
+    sample_y       = args.sample_y
+    resolution     = args.resolution
+    full_file_name = args.full_file_name
 
     log.warning('tile file sorted')
     x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1][sample_x])}

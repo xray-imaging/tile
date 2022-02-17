@@ -145,6 +145,6 @@ Thumbs.db
 log_*.rst
 *.log*
 *.tiff
-*.jpg
-*.png
+#*.jpg
+#*.png
 tmp

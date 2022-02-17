@@ -82,11 +82,26 @@ SECTIONS['file-io'] = {
         'type': Path,
         'help': "Name of the last used directory containing multiple hdf files",
         'metavar': 'PATH'},
+    'tmp-file-name': {
+        'default': '/tile/tmp.h5',
+        'type': str,
+        'help': "Default output file name",
+        'metavar': 'FILE'},
+    'tile-file-name': {
+        'default': 'tile.h5',
+        'type': str,
+        'help': "Default stitched file name",
+        'metavar': 'FILE'},
     'file-format': {
         'default': 'dx',
         'type': str,
         'help': "see from https://dxchange.readthedocs.io/en/latest/source/demo.html",
-        'choices': ['dx', 'anka', 'australian', 'als', 'elettra', 'esrf', 'aps1id', 'aps2bm', 'aps5bm', 'aps7bm', 'aps8bm', 'aps13bm', 'aps32id', 'petraP05', 'tomcat', 'xradia']},
+        'choices': ['dx', 'aps2bm', 'aps7bm', 'aps32id']},
+    'binning': {
+        'type': util.positive_int,
+        'default': 0,
+        'help': "Reconstruction binning factor as power(2, choice)",
+        'choices': [0, 1, 2, 3]},
         }
 
 SECTIONS['stitch'] = {
@@ -108,32 +123,7 @@ SECTIONS['stitch'] = {
         'help': "Number of of projections for simultaneous processing",},    
     }    
 
-SECTIONS['shift'] = {
-    'binning': {
-        'type': util.positive_int,
-        'default': 0,
-        'help': "Reconstruction binning factor as power(2, choice)",
-        'choices': [0, 1, 2, 3]},
-    'rotation-axis': {
-        'default': -1.0,
-        'type': float,
-        'help': "Location of rotation axis"},
-    'center-search-width': {
-        'type': float,
-        'default': 10.0,
-        'help': "+/- center search width (pixel). "},
-    'center-search-step': {
-        'type': float,
-        'default': 0.5,
-        'help': "+/- center search step (pixel). "},
-    'shift-search-width': {
-        'type': int,
-        'default': 20,
-        'help': "+/- center search width (pixel). "},
-    'shift-search-step': {
-        'type': int,
-        'default': 1,
-        'help': "+/- center search step (pixel). "},
+SECTIONS['center'] = {
     'nsino': {
         'default': 0.5,
         'type': float,
@@ -142,22 +132,46 @@ SECTIONS['shift'] = {
         'default': 0.5,
         'type': float,
         'help': 'Location of the projection used for testing shifts between tiles (0 top, 1 bottom)'},    
-    'nsino-per-chunk': {     
-        'type': int,
-        'default': 8,
-        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory. ",},    
+    'center-search-width': {
+        'type': float,
+        'default': 10.0,
+        'help': "+/- center search width (pixel). "},
+    'center-search-step': {
+        'type': float,
+        'default': 0.5,
+        'help': "+/- center search step (pixel). "},
+    'rotation-axis': {
+        'default': -1.0,
+        'type': float,
+        'help': "Location of rotation axis"},
     'recon-engine': {     
         'type': str,
         'default': 'tomopy',
         'help': "Reconstruction engine (tomopy or tomocupy). ",},    
+        }
+
+SECTIONS['shift'] = {
+    'shift-search-width': {
+        'type': int,
+        'default': 20,
+        'help': "+/- center search width (pixel). "},
+    'shift-search-step': {
+        'type': int,
+        'default': 1,
+        'help': "+/- center search step (pixel). "},
+    'nsino-per-chunk': {     
+        'type': int,
+        'default': 8,
+        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory. ",},    
     }
 
-INFO_PARAMS = ('file-io',)
-STITCH_PARAMS = ('file-io', 'stitch')
-SHIFT_PARAMS = ('file-io', 'shift')
-ALL_PARAMS = ('file-io', 'shift', 'stitch')
+INFO_PARAMS   = ('file-io',)
+CENTER_PARAMS = ('file-io', 'center')
+SHIFT_PARAMS  = ('file-io', 'center', 'shift')
+STITCH_PARAMS = ('file-io', 'center', 'stitch')
+ALL_PARAMS    = ('file-io', 'center', 'shift', 'stitch')
 
-NICE_NAMES = ('General', 'File IO', 'Shift', 'Stitch')
+NICE_NAMES = ('General', 'File IO', 'Center', 'Shift', 'Stitch')
 
 def get_config_name():
     """Get the command line --config option."""
@@ -174,7 +188,6 @@ def get_config_name():
 
     return name
 
-
 def parse_known_args(parser, subparser=False):
     """
     Parse arguments from file and then override by the ones specified on the
@@ -190,7 +203,7 @@ def parse_known_args(parser, subparser=False):
         values = ""
 
     return parser.parse_known_args(values)[0]
-
+    
 
 def config_to_list(config_name=CONFIG_FILE_NAME):
     """
@@ -273,23 +286,6 @@ def write(config_file, args=None, sections=None):
         config.write(f)
 
 
-def log_values(args):
-    """Log all values set in the args namespace.
-
-    Arguments are grouped according to their section and logged alphabetically
-    using the DEBUG log level thus --verbose is required.
-    """
-    args = args.__dict__
-
-    for section, name in zip(SECTIONS, NICE_NAMES):
-        entries = sorted((k for k in args.keys() if k in SECTIONS[section]))
-        if entries:
-            log.info(name)
-            for entry in entries:
-                value = args[entry] if args[entry] is not None else "-"
-                log.info("  {:<16} {}".format(entry, value))
-
-
 def show_config(args):
     """Log all values set in the args namespace.
 
@@ -300,8 +296,9 @@ def show_config(args):
 
     log.warning('tile status start')
     for section, name in zip(SECTIONS, NICE_NAMES):
-        entries = sorted((k for k in args.keys() if k.replace('_', '-') in SECTIONS[section]))
+        entries = sorted((k for k in args.keys() if k.replace('_', '-') in SECTIONS[section]))        
         if entries:
+            log.info(name)
             for entry in entries:
                 value = args[entry] if args[entry] != None else "-"
                 log.info("  {:<16} {}".format(entry, value))

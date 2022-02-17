@@ -80,11 +80,11 @@ def stitching(args):
     tile_path = os.path.join(args.folder_name, 'tile')
     if not os.path.exists(tile_path):
         os.makedirs(tile_path)
-    tile_fname = os.path.join(tile_path, 'tile.h5')
+    tile_file_name = os.path.join(tile_path, args.tile_file_name)
     with h5py.File(grid[0, 0], 'r') as fid:
         theta = fid['/exchange/theta'][:]
 
-    with h5py.File(tile_fname, 'w') as fid:
+    with h5py.File(tile_file_name, 'w') as fid:
         # init output arrays
         data_all = fid.create_dataset('/exchange/data', (args.end_proj-args.start_proj,
                                       data_shape[1], size), dtype=data_type, chunks=(1, data_shape[1], size))
@@ -113,4 +113,8 @@ def stitching(args):
                 flat_all[st_chunk-args.start_proj:end_chunk-args.start_proj,
                          :, st:end] = np.mean(flat[:, :, ::step], axis=0)
 
-    log.info(f'Output file {args.stitch_fname}')
+    log.info(f'Output file {tile_file_name}')
+    log.info(f'Reconstruct {tile_file_name} with tomocupy:')
+    log.info(f'tomocupy recon --file-name /data/2021-12/Duchkov/mosaic/tile/tile.h5 --rotation-axis 1246 --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning 0 --nsino-per-chunk 8 --rotation-axis-auto manual')
+    log.info(f'Reconstruct {tile_file_name} with tomopy:')
+    log.info(f'tomopy recon --file-name /data/2021-12/Duchkov/mosaic/tile/tile.h5 --rotation-axis 1246 --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning 0 --nsino-per-chunk 8 --rotation-axis-auto manual')

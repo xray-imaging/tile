@@ -66,7 +66,7 @@ def center(args):
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
 
     # check if flip is needed for having tile[0,0] as the left one and at sample_x=0
-    sample_x = 'measurement_instrument_sample_motor_stack_setup_sample_x'
+    sample_x = args.sample_x
     x0 = meta_dict[grid[0,0]][sample_x][0]
     x1 = meta_dict[grid[0,-1]][sample_x][0]
     if(x0+x1>0):
@@ -133,7 +133,7 @@ def shift_manual(args):
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
 
     # check if flip is needed for having tile[0,0] as the left one and at sample_x=0
-    sample_x = 'measurement_instrument_sample_motor_stack_setup_sample_x'
+    sample_x = args.sample_x
     x0 = meta_dict[grid[0,0]][sample_x][0]
     x1 = meta_dict[grid[0,-1]][sample_x][0]
     if(x0+x1>0):
@@ -163,33 +163,6 @@ def shift_manual(args):
     dirPath = os.path.dirname(tmp_file_name)
     if not os.path.exists(dirPath):
         os.makedirs(dirPath)
-    # # Center search with using the first tile
-    # for itile in range(grid.shape[1]):
-    #     data,flat,dark,theta = dxchange.read_aps_32id(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
-    #     st = itile*x_shift
-    #     end = st+data_shape[2]
-    #     data_all[:,:,st:end] = data[:,:,::step]
-    #     dark_all[:,:,st:end] = np.mean(dark[:,:,::step],axis=0)
-    #     flat_all[:,:,st:end] = np.mean(flat[:,:,::step],axis=0)
-    #     dirPath = os.path.dirname(tmp_file_name)
-    #     if not os.path.exists(dirPath):
-    #         os.makedirs(dirPath)
-    #     f = dx.File(tmp_file_name, mode='w') 
-    #     f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
-    #     f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
-    #     f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
-    #     f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
-    #     f.close()
-    # print(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
-    #         --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
-    #         --center-search-step {args.center_search_step}')
-    # os.system(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
-    #         --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
-    #         --center-search-step {args.center_search_step}')            
-    
-    
-    # try_path = f"{os.path.dirname(tmp_file_name)}_rec{postf}/try_center/tmp/recon*"
-    # log.info(f'Please open the stack of images from {try_path} and select the rotation center')
     center = input(f"Please enter rotation center ({args.rotation_axis}): ")
     if center is not None:        
         args.rotation_axis = center

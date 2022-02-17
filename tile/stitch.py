@@ -60,7 +60,7 @@ def stitching(args):
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, _, _ = fileio.tile(args)
     # check if flip is needed for having tile[0,0] as the left one and at sample_x=0
-    sample_x = 'measurement_instrument_sample_motor_stack_setup_sample_x'
+    sample_x = args.sample_x
     x0 = meta_dict[grid[0, 0]][sample_x][0]
     x1 = meta_dict[grid[0, -1]][sample_x][0]
     if(x0+x1 > 0):

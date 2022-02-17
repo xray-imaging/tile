@@ -102,6 +102,22 @@ SECTIONS['file-io'] = {
         'default': 0,
         'help': "Reconstruction binning factor as power(2, choice)",
         'choices': [0, 1, 2, 3]},
+    'sample-x': {     
+        'type': str,
+        'default': 'measurement_instrument_sample_motor_stack_setup_sample_x',
+        'help': "Location in the hdf tomography layout where to find the tile x position (mm) (first / is removed, other are replaced with _)",},    
+    'sample-y': {     
+        'type': str,
+        'default': 'measurement_instrument_sample_motor_stack_setup_sample_y',
+        'help': "Location in the hdf tomography layout where to find the tile y position (mm) (first / is removed, other are replaced with _)",},    
+    'resolution': {     
+        'type': str,
+        'default': 'measurement_instrument_detection_system_objective_resolution',
+        'help': "Location in the hdf tomography layout where to find the image resolution (um) (first / is removed, other are replaced with _)",},    
+    'full_file_name': {     
+        'type': str,
+        'default': 'measurement_sample_full_file_name',
+        'help': "Location in the hdf tomography layout where to find the full file name (first / is removed, other are replaced with _)",},
         }
 
 SECTIONS['stitch'] = {

@@ -150,13 +150,14 @@ def extract(args):
 
 def tile(args):
     meta_dict = extract(args)
-
     sample_x       = args.sample_x
     sample_y       = args.sample_y
     resolution     = args.resolution
     full_file_name = args.full_file_name
     if args.step_x>0:
-        log.warning('use manual sample x')
+        log.error('--step-x is greater than zero: %d' % args.step_x) 
+        log.error('%d will be used to manually overide the value stored in the hdf file' % args.step_x) 
+        log.error('to use the value stored in the hdf file: --step-x 0') 
         for i,k in enumerate(meta_dict.keys()):
             log.info(f'{k}, sample_x = {i*args.step_x}')
             meta_dict[k][sample_x][0] = i*args.step_x

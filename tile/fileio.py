@@ -112,7 +112,7 @@ def extract_meta(fname):
             sub_dict = extract_dict(h5fname)
             meta_dict.update(sub_dict)
     else:
-        log.error('No valid HDF5 file(s) fund')
+        log.error('No valid HDF5 file(s) found')
         return None
 
     return meta_dict
@@ -155,19 +155,23 @@ def tile(args):
     sample_y       = args.sample_y
     resolution     = args.resolution
     full_file_name = args.full_file_name
-
+    if args.step_x>0:
+        log.warning('use manual sample x')
+        for i,k in enumerate(meta_dict.keys()):
+            log.info(f'{k}, sample_x = {i*args.step_x}')
+            meta_dict[k][sample_x][0] = i*args.step_x
     log.warning('tile file sorted')
     x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1][sample_x])}
     y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1][sample_y])}
     
     first_key = list(y_sorted.keys())[0]
     second_key = list(y_sorted.keys())[1]
-    # print(y_sorted)
     tile_index_x = 0
     tile_index_y = 0
     x_start = y_sorted[first_key][sample_x][0] - 1
     y_start = y_sorted[first_key][sample_y][0] - 1 
 
+    y_sorted[first_key][resolution] = [0.69, 'um']
     x_shift = int((1000*(x_sorted[second_key][sample_x][0]- x_sorted[first_key][sample_x][0]))/y_sorted[first_key][resolution][0])
     y_shift = 0
     

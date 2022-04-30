@@ -118,6 +118,10 @@ SECTIONS['file-io'] = {
         'type': str,
         'default': 'measurement_sample_full_file_name',
         'help': "Location in the hdf tomography layout where to find the full file name (first / is removed, other are replaced with _)",},
+    'step-x': {
+        'default': 0,
+        'type': float,
+        'help': 'Manual step in sample x'},  
         }
 
 SECTIONS['stitch'] = {

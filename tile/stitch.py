@@ -53,6 +53,7 @@ from tile import fileio
 
 __all__ = ['stitching']
 
+
 def stitching(args):
     """Stitching projection tiles in horizontal direction"""
 
@@ -75,15 +76,19 @@ def stitching(args):
 
     # total size in x direction, multiple of 4 for faster ffts in reconstruction
     size = int(np.ceil(
-        (data_shape[2]+np.sum(np.sum(x_shifts)))/4)*4)
+        (data_shape[2]+np.sum(np.sum(x_shifts)))/16)*16)
 
     tile_path = os.path.join(args.folder_name, 'tile')
     if not os.path.exists(tile_path):
         os.makedirs(tile_path)
     tile_file_name = os.path.join(tile_path, args.tile_file_name)
-    with h5py.File(grid[0, 0], 'r') as fid:
-        theta = fid['/exchange/theta'][:]
+    theta = np.zeros(1,dtype='float32')
+    for itile in range(grid.shape[1]):
+        with h5py.File(grid[0, itile], 'r') as fid:
+            if(len(fid['/exchange/theta'][:])>len(theta)):
+                theta = fid['/exchange/theta'][:]
 
+    os.system(f'rm -rf {tile_file_name}')
     with h5py.File(tile_file_name, 'w') as fid:
         # init output arrays
         data_all = fid.create_dataset('/exchange/data', (args.end_proj-args.start_proj,
@@ -102,19 +107,27 @@ def stitching(args):
 
             log.info(f'Stitching projections {st_chunk} - {end_chunk}')
             for itile in range(grid.shape[1]):
-                data, flat, dark, _ = dxchange.read_aps_32id(
-                    grid[0, ::-step][itile], proj=(st_chunk, end_chunk))
-                st = np.sum(x_shifts[:itile+1])
-                end = min(st+data_shape[2], size)
-                data_all[st_chunk-args.start_proj:end_chunk -
-                         args.start_proj, :, st:end] = data[:, :, ::step]
-                dark_all[st_chunk-args.start_proj:end_chunk-args.start_proj,
-                         :, st:end] = np.mean(dark[:, :, ::step], axis=0)
-                flat_all[st_chunk-args.start_proj:end_chunk-args.start_proj,
-                         :, st:end] = np.mean(flat[:, :, ::step], axis=0)
+                with h5py.File(grid[0, ::-step][itile],'r') as fidin:
+                    uids = fidin['/defaults/NDArrayUniqueId'][:]
+                    hdf_location = fidin['/defaults/HDF5FrameLocation']                        
+                    proj_ids = uids[hdf_location[:] == b'/exchange/data']-1
+                    proj_ids = proj_ids[(proj_ids>=st_chunk)*(proj_ids<end_chunk)]
+                    if len(proj_ids)!=end_chunk-st_chunk:
+                        log.warning('There are missing projection in the current tile, setting them to 0')
+                    data = fidin['/exchange/data'][proj_ids]
+                    flat = fidin['/exchange/data_white'][:]
+                    dark = fidin['/exchange/data_dark'][:]
+                    # data, flat, dark, _ = dxchange.read_aps_32id(
+                    #     grid[0, ::-step][itile], proj=(st_chunk, end_chunk))
+
+                    st = np.sum(x_shifts[:itile+1])
+                    end = min(st+data_shape[2], size)
+                    data_all[proj_ids-args.start_proj, :, st:end] = data[:, :, ::step]
+                    dark_all[0,:, st:end] = np.mean(dark[:, :, ::step], axis=0)
+                    flat_all[0,:, st:end] = np.mean(flat[:, :, ::step], axis=0)
 
     log.info(f'Output file {tile_file_name}')
     log.info(f'Reconstruct {tile_file_name} with tomocupy:')
-    log.info(f'tomocupy recon --file-name /data/2021-12/Duchkov/mosaic/tile/tile.h5 --rotation-axis 1246 --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning 0 --nsino-per-chunk 8 --rotation-axis-auto manual')
+    log.info(f'tomocupy recon --file-name {tile_file_name} --rotation-axis <found rotation axis> --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning <select binning> --nsino-per-chunk 2 ')
     log.info(f'Reconstruct {tile_file_name} with tomopy:')
-    log.info(f'tomopy recon --file-name /data/2021-12/Duchkov/mosaic/tile/tile.h5 --rotation-axis 1246 --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning 0 --nsino-per-chunk 8 --rotation-axis-auto manual')
+    log.info(f'tomopy recon --file-name {tile_file_name} --rotation-axis <found rotation axis> --reconstruction-type full --file-type double_fov --remove-stripe-method fw --binning <select binning> --nsino-per-chunk 8 --rotation-axis-auto manual')

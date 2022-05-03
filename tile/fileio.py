@@ -64,8 +64,6 @@ SPACE_PREFIX = "    "
 KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 SHIFTS_FILE_HEADER = '# Array shape: '
 
-__all__ = ['read_hdf_meta']
-
 def write_array(fname, arr):
       
     # Write the array to disk
@@ -119,8 +117,8 @@ def extract_meta(fname):
 
 def extract_dict(fname):
 
-    tree, meta = read_hdf_meta(fname)
-    sub_dict = {fname : meta}
+    tree, meta_data = dxchange.read_hdf_meta(fname)
+    sub_dict = {fname : meta_data}
 
     return sub_dict
 
@@ -220,128 +218,4 @@ def tile(args):
 
     return meta_dict, grid, data_shape, proj0.dtype, x_shift, y_shift
 
-
-
-# #####################################################################################
-def read_hdf_meta(fname, add_shape=True):
-    """
-    Get the tree view of a hdf/nxs file.
-
-    Parameters
-    ----------
-    file_path : str
-        Path to the file.
-    add_shape : bool
-        Including the shape of a dataset to the tree if True.
-
-    Returns
-    -------
-    meta : dict
-        A dictionary containing all hdf file meta data
-    tree : list
-        A list of string containing the hdf file tree structure
-    """
-
-    tree = deque()
-    meta = {}
-
-    with h5py.File(fname, 'r') as hdf_object:
-        _extract_hdf(tree, meta, hdf_object, add_shape=add_shape)
-    # for entry in tree:
-    #     print(entry)
-    return tree, meta
-
-def _get_subgroups(hdf_object, key=None):
-    """
-    Supplementary method for building the tree view of a hdf5 file.
-    Return the name of subgroups :cite:`Vo:21`.
-    """
-    list_group = []
-    if key is None:
-        for group in hdf_object.keys():
-            list_group.append(group)
-        if len(list_group) == 1:
-            key = list_group[0]
-        else:
-            key = ""
-    else:
-        if key in hdf_object:
-            try:
-                obj = hdf_object[key]
-                if isinstance(obj, h5py.Group):
-                    for group in hdf_object[key].keys():
-                        list_group.append(group)
-            except KeyError:
-                pass
-    if len(list_group) > 0:
-        list_group = sorted(list_group)
-    return list_group, key
-
-def _add_branches(tree, meta, hdf_object, key, key1, index, last_index, prefix,
-                  connector, level, add_shape):
-    """
-    Supplementary method for building the tree view of a hdf5 file.
-    Add branches to the tree :cite:`Vo:21`.
-    """
-    shape = None
-    key_comb = key + "/" + key1
-    if add_shape is True:
-        if key_comb in hdf_object:
-            try:
-                obj = hdf_object[key_comb]
-                if isinstance(obj, h5py.Dataset):
-                    shape = str(obj.shape)
-                    if obj.shape[0]==1:
-                        s = obj.name.split('/')
-                        name = "_".join(s)[1:]
-                        # print(s)
-                        # print(name)
-                        value = obj[()][0]
-                        attr = obj.attrs.get('units')
-                        if attr != None:
-                            attr = attr.decode('UTF-8')
-                            # log.info(">>>>>> %s: %s %s" % (obj.name, value, attr))
-                        if  (value.dtype.kind == 'S'):
-                            value = value.decode(encoding="utf-8")
-                            # log.info(">>>>>> %s: %s" % (obj.name, value))
-                        meta.update( {name : [value, attr] } )
-            except KeyError:
-                shape = str("-> ???External-link???")
-    if shape is not None:
-        tree.append(f"{prefix}{connector} {key1} {shape}")
-    else:
-        tree.append(f"{prefix}{connector} {key1}")
-    if index != last_index:
-        prefix += PIPE_PREFIX
-    else:
-        prefix += SPACE_PREFIX
-    _extract_hdf(tree, meta, hdf_object, prefix=prefix, key=key_comb,
-                    level=level, add_shape=add_shape)
-
-def _extract_hdf(tree, meta, hdf_object, prefix="", key=None, level=0,
-                    add_shape=True):
-    """
-    Supplementary method for building the tree view of a hdf5 file.
-    Create the tree body :cite:`Vo:21`..
-    """
-    entries, key = _get_subgroups(hdf_object, key)
-    num_ent = len(entries)
-    last_index = num_ent - 1
-    level = level + 1
-    if num_ent > 0:
-        if last_index == 0:
-            key = "" if level == 1 else key
-            if num_ent > 1:
-                connector = PIPE
-            else:
-                connector = ELBOW if level > 1 else ""
-            _add_branches(tree, meta, hdf_object, key, entries[0], 0, 0, prefix,
-                          connector, level, add_shape)
-        else:
-            for index, key1 in enumerate(entries):
-                connector = ELBOW if index == last_index else TEE
-                if index == 0:
-                    tree.append(prefix + PIPE)
-                _add_branches(tree, meta, hdf_object, key, key1, index, last_index,
-                              prefix, connector, level, add_shape)
 

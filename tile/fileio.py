@@ -55,12 +55,6 @@ from pathlib import Path
 
 from tile import log
 
-PIPE = "│"
-ELBOW = "└──"
-TEE = "├──"
-PIPE_PREFIX = "│   "
-SPACE_PREFIX = "    "
-
 KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 SHIFTS_FILE_HEADER = '# Array shape: '
 

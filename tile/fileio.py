@@ -215,7 +215,7 @@ def tile(args):
         grid[ind_list[k_file, 1], ind_list[k_file, 0]] = v
         k_file = k_file + 1 
 
-    proj0, flat0, dark0, theta0, _ = dxchange.read_dx(grid[0,0], proj=(0, 1))
+    proj0, flat0, dark0, theta0 = dxchange.read_aps_tomoscan_hdf5(grid[0,0], proj=(0, 1))
     data_shape = [len(theta0),*proj0.shape[1:]]
 
     return meta_dict, grid, data_shape, proj0.dtype, x_shift, y_shift

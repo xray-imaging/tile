@@ -329,10 +329,10 @@ class Mock(object):
 
 MOCK_MODULES = ['h5py',
                 'dxchange',
-                'dxchange.reader',
                 'numpy',
                 'dxfile',
                 'dxfile.dxtomo',
+                'tile',
                 ]
 
 for mod_name in MOCK_MODULES:

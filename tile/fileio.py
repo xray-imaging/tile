@@ -49,6 +49,7 @@ import h5py
 import numpy as np
 import dxchange.reader as dxreader
 import dxchange
+import meta # from https://github.com/xray-imaging/meta.git
 
 from collections import deque
 from pathlib import Path
@@ -111,7 +112,7 @@ def extract_meta(fname):
 
 def extract_dict(fname):
 
-    tree, meta_data = dxchange.read_hdf_meta(fname)
+    tree, meta_data = meta.read_hdf(fname)
     sub_dict = {fname : meta_data}
 
     return sub_dict

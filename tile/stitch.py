@@ -117,7 +117,7 @@ def stitching(args):
                     data = fidin['/exchange/data'][proj_ids]
                     flat = fidin['/exchange/data_white'][:]
                     dark = fidin['/exchange/data_dark'][:]
-                    # data, flat, dark, _ = dxchange.read_aps_32id(
+                    # data, flat, dark, _ = dxchange.read_aps_tomoscan_hdf5(
                     #     grid[0, ::-step][itile], proj=(st_chunk, end_chunk))
 
                     st = np.sum(x_shifts[:itile+1])

@@ -93,7 +93,7 @@ def center(args):
 
     # Center search with using the first tile
     for itile in range(grid.shape[1]):
-        data,flat,dark,theta = dxchange.read_aps_32id(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
+        data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
         st = itile*x_shift
         end = st+data_shape[2]
         data_all[:,:,st:end] = data[:,:,::step]
@@ -179,7 +179,7 @@ def shift_manual(args):
             x_shifts = x_shifts_res.copy()
             x_shifts[jtile] += err_shift
             for itile in range(grid.shape[1]):
-                data,flat,dark,theta = dxchange.read_aps_32id(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
+                data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
                 st = np.sum(x_shifts[:itile+1])
                 end = min(st+data_shape[2],size)
                 sts = ishift*2**args.binning
@@ -187,7 +187,7 @@ def shift_manual(args):
                 data_all[:,sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
                 dark_all[:,sts:ends,st:end] = np.mean(dark[:,:,::step],axis=0)[:,:end-st]
                 flat_all[:,sts:ends,st:end] = np.mean(flat[:,:,::step],axis=0)[:,:end-st]
-                data,flat,dark,theta = dxchange.read_aps_32id(grid[0,::-step][itile],proj=(idproj,idproj+1))       
+                data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][itile],proj=(idproj,idproj+1))       
                 data = (data-np.mean(dark,axis=0))/np.maximum(1e-3,(np.mean(flat,axis=0)-np.mean(dark,axis=0)))
                 pdata_all[ishift,:,st:end] = data[:,:,::step][:,:,:end-st]
         # create a temporarily DataExchange file

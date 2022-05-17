@@ -76,12 +76,6 @@ SECTIONS['general'] = {
         'action': 'store_true'},
         }
 
-
-
-
-
-
-
 SECTIONS['file-io'] = {
     'folder-name': {
         'default': '.',
@@ -110,20 +104,20 @@ SECTIONS['file-io'] = {
         'choices': [0, 1, 2, 3]},
     'sample-x': {     
         'type': str,
-        'default': 'measurement_instrument_sample_motor_stack_setup_x',
-        'help': "Location in the hdf tomography layout where to find the tile x position (mm) (first / is removed, other are replaced with _)",},    
+        'default': '/measurement/instrument/sample_motor_stack/setup/x',
+        'help': "Location in the hdf tomography layout where to find the tile x position (mm)"},    
     'sample-y': {     
         'type': str,
-        'default': 'measurement_instrument_sample_motor_stack_setup_y',
-        'help': "Location in the hdf tomography layout where to find the tile y position (mm) (first / is removed, other are replaced with _)",},    
+        'default': '/measurement/instrument/sample_motor_stack/setup/y',
+        'help': "Location in the hdf tomography layout where to find the tile y position (mm)"},    
     'resolution': {     
         'type': str,
-        'default': 'measurement_instrument_detection_system_objective_resolution',
-        'help': "Location in the hdf tomography layout where to find the image resolution (um) (first / is removed, other are replaced with _)",},    
+        'default': '/measurement/instrument/detection_system/objective/resolution',
+        'help': "Location in the hdf tomography layout where to find the image resolution (um)"},    
     'full_file_name': {     
         'type': str,
-        'default': 'measurement_sample_file_full_name',
-        'help': "Location in the hdf tomography layout where to find the full file name (first / is removed, other are replaced with _)",},
+        'default': '/measurement/sample/file/full_name',
+        'help': "Location in the hdf tomography layout where to find the full file name"},
     'step-x': {
         'default': 0,
         'type': float,

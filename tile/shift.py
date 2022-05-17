@@ -51,7 +51,9 @@ import numpy as np
 from tile import log
 from tile import fileio
 
-__all__ = ['shift_manual']
+__all__ = ['shift_manual',
+           'center',
+          ]
 
 
 def center(args):

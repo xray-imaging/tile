@@ -3,3 +3,4 @@ dxchange
 h5py
 numpy
 pandas
+meta # from https://github.com/xray-imaging/meta

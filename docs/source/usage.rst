@@ -1,7 +1,7 @@
 =====
 Usage
 =====
-
+ 
 1. Verify the dataset is valid
 ==============================
 
@@ -11,7 +11,7 @@ Tile needs the following experiment meta data to automatically sort the mosaic t
 #. the projection image pixel size in microns
 #. the tile data set full file name
 
-At the APS beamline 2-BM, these meta data are automatically stored at data collection time in an hdf file compliant with `dxfile <https://dxfile.readthedocs.io/en/latest/index.html>`_ following this layout:
+At the APS beamline `2 BM <https://docs2bm.readthedocs.io/en/latest/>`_, these meta data are automatically stored at data collection time in an hdf file compliant with `dxfile <https://dxfile.readthedocs.io/en/latest/index.html>`_ following this layout:
 
 
 .. image:: img/hdf_00.png
@@ -26,29 +26,31 @@ At the APS beamline 2-BM, these meta data are automatically stored at data colle
    :width: 200px
    :alt: project
 
-#. sample_x  (mm)         = '/measurement/instrument/sample_motor_stack/setup/sample_x'
-#. sample_y  (mm)         = '/measurement/instrument/sample_motor_stack/setup/sample_y'
+#. sample_x  (mm)         = '/measurement/instrument/sample_motor_stack/setup/x'
+#. sample_y  (mm)         = '/measurement/instrument/sample_motor_stack/setup/y'
 #. resolution (micron)    = '/measurement/instrument/detection_system/objective/resolution'
-#. full_file_name         = '/measurement/sample/full_file_name'
+#. full_file_name         = '/measurement/sample/file/full_name'
 
 
 If these parameters are stored somewhere else in your hdf file, you can set their locations at runtime using the 
 --sample-x, --sample-y, --resolution --full-file-name options. 
 
-#. --sample-x 'your_hdf_path_to_sample_x_in_mm'
-#. --sample-y 'your_hdf_path_to_sample_y_in_mm'
-#. --resolution 'your_hdf_path_to_image_resolution_in_micron'
-#. --full-file-name 'your_hdf_path_to_the_file_name'
+#. --sample-x '/your_hdf_path/to_sample_x_in_mm'
+#. --sample-y '/your_hdf_path/to_sample_y_in_mm'
+#. --resolution '/your_hdf_path/to_image_resolution_in_micron'
+#. --full-file-name '/your_hdf_path/to_the_full_file_name'
 
 
 By default, these are set to:
 
-#. --sample-x 'measurement_instrument_sample_motor_stack_setup_sample_x'
-#. --sample-y 'measurement_instrument_sample_motor_stack_setup_sample_y'
-#. --resolution 'measurement_instrument_detection_system_objective_resolution'
-#. --full-file-name 'measurement_sample_full_file_name'
+#. --sample-x '/measurement/instrument/sample_motor_stack/setup/x'
+#. --sample-y '/measurement/instrument/sample_motor_stack/setup/y'
+#. --resolution '/measurement/instrument/detection_system/objective/resolution'
+#. --full-file-name '/measurement/sample/file/full_name'
 
-to meet the `dxfile <https://dxfile.readthedocs.io/en/latest/index.html>`_ definition.
+to meet the `dxfile <https://dxfile.readthedocs.io/en/latest/source/demo/doc.areadetector.html#xml>`_ definitions for 
+beamlines `2 BM <https://docs2bm.readthedocs.io/en/latest/>`_ , `7 BM <https://docs7bm.readthedocs.io/en/latest/>`_ 
+and `32 ID <https://docs32id.readthedocs.io/en/latest/>`_.
 
 Once the above are confirmed, you can validate the mosaic data set with:
 ::

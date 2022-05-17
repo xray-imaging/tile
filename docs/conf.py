@@ -332,7 +332,7 @@ MOCK_MODULES = ['h5py',
                 'numpy',
                 'dxfile',
                 'dxfile.dxtomo',
-                'tile',
+                'meta',
                 ]
 
 for mod_name in MOCK_MODULES:

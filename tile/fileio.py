@@ -47,7 +47,6 @@ import os
 import re
 import h5py
 import numpy as np
-import dxchange.reader as dxreader
 import dxchange
 import meta # from https://github.com/xray-imaging/meta.git
 

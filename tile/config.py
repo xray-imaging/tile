@@ -117,7 +117,7 @@ SECTIONS['file-io'] = {
     'full_file_name': {     
         'type': str,
         'default': '/measurement/sample/file/full_name',
-        'help': "Location in the hdf tomography layout where to find the full file name",},
+        'help': "Location in the hdf tomography layout where to find the full file name"},
     'step-x': {
         'default': 0,
         'type': float,

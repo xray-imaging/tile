@@ -164,7 +164,7 @@ def tile(args):
     x_start = y_sorted[first_key][sample_x][0] - 1
     y_start = y_sorted[first_key][sample_y][0] - 1 
 
-    y_sorted[first_key][resolution] = [0.69, 'um']
+    #y_sorted[first_key][resolution] = [0.69, 'um']
     x_shift = int((1000*(x_sorted[second_key][sample_x][0]- x_sorted[first_key][sample_x][0]))/y_sorted[first_key][resolution][0])
     y_shift = 0
     

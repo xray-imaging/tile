@@ -98,7 +98,8 @@ def center(args):
         data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
         st = itile*x_shift
         end = st+data_shape[2]
-        data_all[:,:,st:end] = data[:,:,::step]
+        data_all[:data.shape[0],:,st:end] = data[:,:,::step]
+        data_all[data.shape[0]:,:,st:end] = data[-1,:,::step]
         dark_all[:,:,st:end] = np.mean(dark[:,:,::step],axis=0)
         flat_all[:,:,st:end] = np.mean(flat[:,:,::step],axis=0)
         f = dx.File(tmp_file_name, mode='w') 
@@ -137,15 +138,10 @@ def shift_manual(args):
     else:
         step = 1
     
-    # if args.rotation_axis==-1:
-    #     args.rotation_axis = data_shape[2]//2
-    
-    
     # ids for slice and projection for shifts testing
     idslice = int((data_shape[1]-1)*args.nsino)
     idproj = int((data_shape[0]-1)*args.nprojection)
-    print(args.binning)
-
+    
     # data size after stitching
     size = int(np.ceil((data_shape[2]+(grid.shape[1]-1)*x_shift)/2**(args.binning+1))*2**(args.binning+1))
     data_all = np.ones([data_shape[0],2**args.binning,size],dtype=data_type)
@@ -186,7 +182,9 @@ def shift_manual(args):
                 end = min(st+data_shape[2],size)
                 sts = ishift*2**args.binning
                 ends = sts+2**args.binning
-                data_all[:,sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
+                #data_all[:,sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
+                data_all[:data.shape[0],sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
+                data_all[data.shape[0]:,sts:ends,st:end] = data[-1,:,::step][:,:end-st]
                 dark_all[:,sts:ends,st:end] = np.mean(dark[:,:,::step],axis=0)[:,:end-st]
                 flat_all[:,sts:ends,st:end] = np.mean(flat[:,:,::step],axis=0)[:,:end-st]
                 data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][itile],proj=(idproj,idproj+1))       

@@ -64,7 +64,7 @@ def stitching(args):
     sample_x = args.sample_x
     x0 = meta_dict[grid[0, 0]][sample_x][0]
     x1 = meta_dict[grid[0, -1]][sample_x][0]
-    if(x0+x1 > 0):
+    if args.reverse_step=='True':
         step = -1
     else:
         step = 1
@@ -107,7 +107,11 @@ def stitching(args):
 
             log.info(f'Stitching projections {st_chunk} - {end_chunk}')
             for itile in range(grid.shape[1]):
-                with h5py.File(grid[0, ::-step][itile],'r') as fidin:
+                if args.reverse_grid=='True':
+                    iitile=grid.shape[1]-itile-1
+                else: 
+                    iitile=itile
+                with h5py.File(grid[0, ::-step][iitile],'r') as fidin:
                     uids = fidin['/defaults/NDArrayUniqueId'][:]
                     hdf_location = fidin['/defaults/HDF5FrameLocation']                        
                     proj_ids = uids[hdf_location[:] == b'/exchange/data']-1

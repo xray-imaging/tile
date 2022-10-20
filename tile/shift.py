@@ -71,10 +71,10 @@ def center(args):
     sample_x = args.sample_x
     x0 = meta_dict[grid[0,0]][sample_x][0]
     x1 = meta_dict[grid[0,-1]][sample_x][0]
-    if(x0+x1>0):
-        step = -1
+    if args.reverse_step=='True':
+        step=-1
     else:
-        step = 1
+        step=1    
     if args.rotation_axis==-1:
         args.rotation_axis = data_shape[2]//2
         
@@ -95,7 +95,11 @@ def center(args):
 
     # Center search with using the first tile
     for itile in range(grid.shape[1]):
-        data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
+        if args.reverse_grid=='True':
+            iitile=grid.shape[1]-itile-1
+        else: 
+            iitile=itile
+        data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
         st = itile*x_shift
         end = st+data_shape[2]
         data_all[:data.shape[0],:,st:end] = data[:,:,::step]
@@ -109,10 +113,11 @@ def center(args):
         f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
         f.close()
     log.info(f'Created a temporary hdf file: {tmp_file_name}')
-    log.warning(f'Running: {args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --center-search-step {args.center_search_step}')
-    os.system(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} --remove-stripe-method fw \
+    cmd = f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
             --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
-            --center-search-step {args.center_search_step} --remove-stripe-method fw')            
+            --center-search-step {args.center_search_step} --end-column {args.end_column} --nsino-per-chunk 2'
+    log.warning(cmd)
+    os.system(cmd)      
     
     try_path = f"{os.path.dirname(tmp_file_name)}_rec/try_center/tmp/recon*"
     log.info(f'Please open the stack of images from {try_path} and select the rotation center')
@@ -133,7 +138,7 @@ def shift_manual(args):
     sample_x = args.sample_x
     x0 = meta_dict[grid[0,0]][sample_x][0]
     x1 = meta_dict[grid[0,-1]][sample_x][0]
-    if(x0+x1>0):
+    if args.reverse_step=='True':
         step = -1
     else:
         step = 1
@@ -162,7 +167,6 @@ def shift_manual(args):
     flat_all = np.ones([1,2**args.binning*len(arr_err),size],dtype=data_type)    
     
     pdata_all = np.ones([len(arr_err),data_shape[1],size],dtype='float32')
-    print(data_all.shape)
     x_shifts_res = np.zeros(grid.shape[1],'int')
     x_shifts_res[1:] = x_shift
     for jtile in range(1,grid.shape[1]):      
@@ -177,7 +181,11 @@ def shift_manual(args):
             x_shifts = x_shifts_res.copy()
             x_shifts[jtile] += err_shift
             for itile in range(grid.shape[1]):
-                data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][itile],sino=(idslice,idslice+2**args.binning))       
+                if args.reverse_grid=='True':
+                    iitile=grid.shape[1]-itile-1
+                else: 
+                    iitile=itile
+                data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
                 st = np.sum(x_shifts[:itile+1])
                 end = min(st+data_shape[2],size)
                 sts = ishift*2**args.binning
@@ -187,7 +195,7 @@ def shift_manual(args):
                 data_all[data.shape[0]:,sts:ends,st:end] = data[-1,:,::step][:,:end-st]
                 dark_all[:,sts:ends,st:end] = np.mean(dark[:,:,::step],axis=0)[:,:end-st]
                 flat_all[:,sts:ends,st:end] = np.mean(flat[:,:,::step],axis=0)[:,:end-st]
-                data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][itile],proj=(idproj,idproj+1))       
+                data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],proj=(idproj,idproj+1))       
                 data = (data-np.mean(dark,axis=0))/np.maximum(1e-3,(np.mean(flat,axis=0)-np.mean(dark,axis=0)))
                 pdata_all[ishift,:,st:end] = data[:,:,::step][:,:,:end-st]
         # create a temporarily DataExchange file
@@ -202,9 +210,11 @@ def shift_manual(args):
         f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
         f.close()        
-
-        os.system(f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type full \
-            --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --nsino-per-chunk {args.nsino_per_chunk}')            
+    
+        cmd = f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type full \
+        --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --nsino-per-chunk {args.nsino_per_chunk} --end-column {args.end_column}'
+        log.warning(cmd)
+        os.system(cmd)   
         
         try_path = f"{os.path.dirname(tmp_file_name)}_rec/tmp_rec/recon*"
         tryproj_path = f"{dir}_rec/{basename[:-3]}_proj/p*"

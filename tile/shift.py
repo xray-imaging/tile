@@ -185,16 +185,18 @@ def shift_manual(args):
                     iitile=grid.shape[1]-itile-1
                 else: 
                     iitile=itile
-                data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
+                if args.recon=='True':
+                    data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
                 st = np.sum(x_shifts[:itile+1])
                 end = min(st+data_shape[2],size)
-                sts = ishift*2**args.binning
-                ends = sts+2**args.binning
-                #data_all[:,sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
-                data_all[:data.shape[0],sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
-                data_all[data.shape[0]:,sts:ends,st:end] = data[-1,:,::step][:,:end-st]
-                dark_all[:,sts:ends,st:end] = np.mean(dark[:,:,::step],axis=0)[:,:end-st]
-                flat_all[:,sts:ends,st:end] = np.mean(flat[:,:,::step],axis=0)[:,:end-st]
+                if args.recon=='True':
+                    sts = ishift*2**args.binning
+                    ends = sts+2**args.binning
+                    data_all[:,sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
+                    data_all[:data.shape[0],sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
+                    data_all[data.shape[0]:,sts:ends,st:end] = data[-1,:,::step][:,:end-st]
+                    dark_all[:,sts:ends,st:end] = np.mean(dark[:,:,::step],axis=0)[:,:end-st]
+                    flat_all[:,sts:ends,st:end] = np.mean(flat[:,:,::step],axis=0)[:,:end-st]
                 data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],proj=(idproj,idproj+1))       
                 data = (data-np.mean(dark,axis=0))/np.maximum(1e-3,(np.mean(flat,axis=0)-np.mean(dark,axis=0)))
                 pdata_all[ishift,:,st:end] = data[:,:,::step][:,:,:end-st]
@@ -204,6 +206,7 @@ def shift_manual(args):
         if not os.path.exists(dirPath):
             os.makedirs(dirPath)
         dxchange.write_tiff_stack(pdata_all,f'{dir}_rec/{basename[:-3]}_proj/p',overwrite=True)        
+        if args.recon==True:
         f = dx.File(tmp_file_name, mode='w') 
         f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))

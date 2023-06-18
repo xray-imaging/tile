@@ -102,7 +102,8 @@ def extract_meta(fname):
         for fname in h5_file_list:
             h5fname = top + fname
             sub_dict = extract_dict(h5fname)
-            meta_dict.update(sub_dict)
+            
+            meta_dict.update(sub_dict)        
     else:
         log.error('No valid HDF5 file(s) found')
         return None
@@ -111,10 +112,11 @@ def extract_meta(fname):
 
 def extract_dict(fname):
 
-    tree, meta_data = meta.read_hdf(fname)
-    sub_dict = {fname : meta_data}
+    mp = meta.read_meta.Hdf5MetadataReader(fname)
+    meta_dict = mp.readMetadata()
+    mp.close()
 
-    return sub_dict
+    return {fname:meta_dict}
 
 def extract(args):
 

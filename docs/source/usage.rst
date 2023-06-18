@@ -55,7 +55,7 @@ and `32 ID <https://docs32id.readthedocs.io/en/latest/>`_.
 Once the above are confirmed, you can validate the mosaic data set with:
 ::
 
-    (tile)$ tile info --folder-name /data/2021-12/Duchkov/mosaic/
+    (tile)$ tile show --folder-name /data/2021-12/Duchkov/mosaic/
     2022-02-16 11:33:38,485 - Started tile
     2022-02-16 11:33:38,485 - Saving log at /home/beams/TOMO/logs/tile_2022-02-16_11_33_38.log
     2022-02-16 11:33:38,485 - checking tile files ...

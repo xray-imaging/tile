@@ -122,6 +122,10 @@ SECTIONS['file-io'] = {
         'default': 0,
         'type': float,
         'help': 'When greater than 0, it is used to manually overide the sample x step size stored in the hdf file'},  
+    'recon': {
+        'default': 'True',
+        'type': str,
+        'help': 'Reconstruct slice for manual stitching or not'},  
         }
 
 SECTIONS['stitch'] = {

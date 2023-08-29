@@ -79,7 +79,7 @@ SECTIONS['general'] = {
 SECTIONS['file-io'] = {
     'folder-name': {
         'default': '.',
-        'type': Path,
+        'type': str,
         'help': "Name of the last used directory containing multiple hdf files",
         'metavar': 'PATH'},
     'tmp-file-name': {

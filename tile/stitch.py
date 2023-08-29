@@ -60,6 +60,7 @@ def stitching(args):
     log.info('Run stitching')
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, _, _ = fileio.tile(args)
+    print(data_shape)
     # check if flip is needed for having tile[0,0] as the left one and at sample_x=0
     sample_x = args.sample_x
     x0 = meta_dict[grid[0, 0]][sample_x][0]
@@ -75,19 +76,21 @@ def stitching(args):
         args.end_proj = data_shape[0]
 
     # total size in x direction, multiple of 4 for faster ffts in reconstruction
+    print(x_shifts)
     size = int(np.ceil(
         (data_shape[2]+np.sum(np.sum(x_shifts)))/16)*16)
-
+    print(f'{size=}')
     tile_path = os.path.join(args.folder_name, 'tile')
     if not os.path.exists(tile_path):
         os.makedirs(tile_path)
     tile_file_name = os.path.join(tile_path, args.tile_file_name)
     theta = np.zeros(1,dtype='float32')
-    for itile in range(grid.shape[1]):
-        with h5py.File(grid[0, itile], 'r') as fid:
-            if(len(fid['/exchange/theta'][:])>len(theta)):
-                theta = fid['/exchange/theta'][:]
-
+    #for itile in range(grid.shape[1]):
+     #   with h5py.File(grid[0, itile], 'r') as fid:
+      #      if(len(fid['/exchange/theta'][:])>len(theta)):
+       #         theta = fid['/exchange/theta'][:]
+    theta = np.linspace(0,180,-args.start_proj+args.end_proj)
+    print(theta.shape)
     os.system(f'rm -rf {tile_file_name}')
     with h5py.File(tile_file_name, 'w') as fid:
         # init output arrays
@@ -107,26 +110,21 @@ def stitching(args):
 
             log.info(f'Stitching projections {st_chunk} - {end_chunk}')
             for itile in range(grid.shape[1]):
+                print(itile)
                 if args.reverse_grid=='True':
                     iitile=grid.shape[1]-itile-1
                 else: 
                     iitile=itile
                 with h5py.File(grid[0, ::-step][iitile],'r') as fidin:
-                    uids = fidin['/defaults/NDArrayUniqueId'][:]
-                    hdf_location = fidin['/defaults/HDF5FrameLocation']                        
-                    proj_ids = uids[hdf_location[:] == b'/exchange/data']-1
-                    proj_ids = proj_ids[(proj_ids>=st_chunk)*(proj_ids<end_chunk)]
-                    if len(proj_ids)!=end_chunk-st_chunk:
-                        log.warning('There are missing projection in the current tile, setting them to 0')
-                    data = fidin['/exchange/data'][proj_ids]
-                    flat = fidin['/exchange/data_white'][:]
-                    dark = fidin['/exchange/data_dark'][:]
+                    data = fidin['/exchange/data'][st_chunk:end_chunk]
+                    flat = fidin['/exchange/data_white_pre'][0:1]
+                    dark = fidin['/exchange/data_dark'][0:1]
                     # data, flat, dark, _ = dxchange.read_aps_tomoscan_hdf5(
                     #     grid[0, ::-step][itile], proj=(st_chunk, end_chunk))
 
                     st = np.sum(x_shifts[:itile+1])
                     end = min(st+data_shape[2], size)
-                    data_all[proj_ids-args.start_proj, :, st:end] = data[:, :, ::step]
+                    data_all[st_chunk:end_chunk, :, st:end] = data[:, :, ::step]
                     dark_all[0,:, st:end] = np.mean(dark[:, :, ::step], axis=0)
                     flat_all[0,:, st:end] = np.mean(flat[:, :, ::step], axis=0)
 

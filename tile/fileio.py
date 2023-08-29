@@ -48,7 +48,9 @@ import re
 import h5py
 import numpy as np
 import dxchange
-import meta # from https://github.com/xray-imaging/meta.git
+import glob
+import json
+# import meta # from https://github.com/xray-imaging/meta.git
 
 from collections import deque
 from pathlib import Path
@@ -91,18 +93,30 @@ def read_array(fname):
         ##FDC shall we return an arrays with zeros? to handle vertial/horizontal scans?
     return new_data
 
-def extract_meta(fname):
-
+def extract_meta(args,fname):
+        
     if os.path.isdir(fname):
         # Add a trailing slash if missing
-        top = os.path.join(fname, '')
-        h5_file_list = list(filter(lambda x: x.endswith(('.h5', '.hdf')), os.listdir(top)))
-        h5_file_list.sort()
+        # top = os.path.join(fname, '')
+        h5_file_list=[]
         meta_dict = {}
-        for fname in h5_file_list:
-            h5fname = top + fname
-            sub_dict = extract_dict(h5fname)
+        dirs = os.listdir(fname)
+        
+        for subdir in dirs:
+            if subdir=='damaged' or subdir=='tile' or subdir=='tile_rec':
+               continue
+            fulldir=os.path.join(fname,subdir)
+            max_size=0
+            for f in os.listdir(fulldir):
+                size = os.stat(os.path.join(fulldir, f  )).st_size                
+                # updating maximum size
+                if size>max_size:
+                    max_size = size
+                    max_file = os.path.join( fulldir, f  )        
             
+            # h5_file_list.append(max_file)
+            mjson = fulldir+'/'+subdir+'.json'
+            sub_dict = extract_dict(args,max_file,mjson)            
             meta_dict.update(sub_dict)        
     else:
         log.error('No valid HDF5 file(s) found')
@@ -110,12 +124,16 @@ def extract_meta(fname):
 
     return meta_dict
 
-def extract_dict(fname):
+def extract_dict(args,fname,mjson):
 
-    mp = meta.read_meta.Hdf5MetadataReader(fname)
-    meta_dict = mp.readMetadata()
-    mp.close()
-
+    f=open(mjson)
+    data = json.load(f)
+    meta_dict={}
+    meta_dict[args.sample_x]=[data['scientificMetadata']['scanParameters']['Sample In']['v']/1000,data['scientificMetadata']['scanParameters']['Sample In']['u']]
+    meta_dict[args.sample_y]=[data['scientificMetadata']['scanParameters']['Sample holder Y-position']['v']/1000,data['scientificMetadata']['scanParameters']['Sample holder Y-position']['u']]
+    meta_dict[args.resolution]=[data['scientificMetadata']['detectorParameters']['Actual pixel size']['v'],data['scientificMetadata']['detectorParameters']['Actual pixel size']['u']]
+    meta_dict[args.full_file_name]=fname
+    
     return {fname:meta_dict}
 
 def extract(args):
@@ -125,14 +143,11 @@ def extract(args):
 
     if str(args.file_format) in KNOWN_FORMATS:
 
-        if file_path.is_file(): #or len(next(os.walk(file_path))[2]) == 1:
-            log.error("A tile dataset requires more than 1 file")
-            log.error("%s contains only 1 file" % args.folder_name)
-        elif file_path.is_dir():
+        if file_path.is_dir():
             log.info("Checking directory: %s for a tile scan" % args.folder_name)
             # Add a trailing slash if missing
             top = os.path.join(args.folder_name, '')
-            meta_dict = extract_meta(args.folder_name)
+            meta_dict = extract_meta(args,args.folder_name)
 
             return meta_dict
         else:
@@ -209,9 +224,12 @@ def tile(args):
         grid[ind_list[k_file, 1], ind_list[k_file, 0]] = v
         k_file = k_file + 1 
 
-    proj0, flat0, dark0, theta0 = dxchange.read_aps_tomoscan_hdf5(grid[0,0], proj=(0, 1))
-    data_shape = [len(theta0),*proj0.shape[1:]]
+    #proj0, flat0, dark0, theta0 = dxchange.read_aps_tomoscan_hdf5(grid[0,0], proj=(0, 1))
+    with h5py.File(grid[0,0],'r') as fid:
+        data_shape = fid['exchange/data'].shape
+        data_type = fid['exchange/data'].dtype
 
-    return meta_dict, grid, data_shape, proj0.dtype, x_shift, y_shift
+
+    return meta_dict, grid, data_shape, data_type, x_shift, y_shift
 
 

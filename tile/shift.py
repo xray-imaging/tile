@@ -47,7 +47,7 @@ import os
 import dxchange
 import dxfile.dxtomo as dx
 import numpy as np
-
+import h5py
 from tile import log
 from tile import fileio
 
@@ -62,7 +62,7 @@ def center(args):
     log.info('Run find rotation axis location')
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
-
+    print(data_shape)
     log.info('image   size (x, y) in pixels: (%d, %d)' % (data_shape[2], data_shape[1]))
     log.info('stitch shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
@@ -75,8 +75,6 @@ def center(args):
         step=-1
     else:
         step=1    
-    if args.rotation_axis==-1:
-        args.rotation_axis = data_shape[2]//2
         
     # ids for slice and projection for shifts testing
     idslice = int((data_shape[1]-1)*args.nsino)
@@ -84,9 +82,13 @@ def center(args):
 
     # data size after stitching
     size = int(np.ceil((data_shape[2]+(grid.shape[1]-1)*x_shift)/2**(args.binning+4))*2**(args.binning+4))
-    data_all = np.ones([data_shape[0],2**args.binning,size],dtype=data_type)
+    data_all = np.ones([data_shape[0],2**args.binning,size],dtype=data_type)   
     dark_all = np.zeros([1,2**args.binning,size],dtype=data_type)
     flat_all = np.ones([1,2**args.binning,size],dtype=data_type)
+    log.info(f'Final shapes {data_all.shape=}, {dark_all.shape=}, {flat_all.shape=}')
+
+    if args.rotation_axis==-1:
+        args.rotation_axis = data_all.shape[2]//2
 
     tmp_file_name = f'{args.folder_name}{args.tmp_file_name}'
     dirPath = os.path.dirname(tmp_file_name)
@@ -95,11 +97,21 @@ def center(args):
 
     # Center search with using the first tile
     for itile in range(grid.shape[1]):
+        log.info(f'tile {itile}')
         if args.reverse_grid=='True':
             iitile=grid.shape[1]-itile-1
         else: 
             iitile=itile
-        data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
+        with h5py.File(grid[0,::-step][iitile],'r') as fid:
+            data = fid['exchange/data'][:,idslice:idslice+2**args.binning][:]
+            dark = fid['exchange/data_dark'][:,idslice:idslice+2**args.binning][:]
+            flat_pre = fid['exchange/data_white_pre'][:,idslice:idslice+2**args.binning][:]
+            flat_post = fid['exchange/data_white_post'][:,idslice:idslice+2**args.binning][:]
+            flat = (flat_pre.astype('float32')+flat_post.astype('float32'))*0.5
+        theta = np.linspace(0,180,data.shape[0])
+
+ 
+#        data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
         st = itile*x_shift
         end = st+data_shape[2]
         data_all[:data.shape[0],:,st:end] = data[:,:,::step]
@@ -110,10 +122,11 @@ def center(args):
         f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
-        f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
+        f.add_entry(dx.Entry.data(theta={'value': theta, 'units':'degrees'}))
+
         f.close()
     log.info(f'Created a temporary hdf file: {tmp_file_name}')
-    cmd = f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
+    cmd = f'{args.recon_engine} recon --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
             --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
             --center-search-step {args.center_search_step} --end-column {args.end_column} --nsino-per-chunk 2'
     log.warning(cmd)
@@ -186,7 +199,15 @@ def shift_manual(args):
                 else: 
                     iitile=itile
                 if args.recon=='True':
-                    data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
+                   with h5py.File(grid[0,::-step][iitile],'r') as fid:
+                      data = fid['exchange/data'][:,idslice:idslice+2**args.binning][:]
+                      dark = fid['exchange/data_dark'][0:1,idslice:idslice+2**args.binning][:]
+                      flat_pre = fid['exchange/data_white_pre'][0:1,idslice:idslice+2**args.binning][:]
+                      flat_post = fid['exchange/data_white_post'][0:1,idslice:idslice+2**args.binning][:]
+                      flat = (flat_pre.astype('float32')+flat_post.astype('float32'))*0.5
+                      theta = np.linspace(0,180,data.shape[0])
+
+                   # data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
                 st = np.sum(x_shifts[:itile+1])
                 end = min(st+data_shape[2],size)
                 if args.recon=='True':
@@ -195,9 +216,17 @@ def shift_manual(args):
                     data_all[:,sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
                     data_all[:data.shape[0],sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
                     data_all[data.shape[0]:,sts:ends,st:end] = data[-1,:,::step][:,:end-st]
-                    dark_all[:,sts:ends,st:end] = np.mean(dark[:,:,::step],axis=0)[:,:end-st]
-                    flat_all[:,sts:ends,st:end] = np.mean(flat[:,:,::step],axis=0)[:,:end-st]
-                data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],proj=(idproj,idproj+1))       
+                    dark_all[:,sts:ends,st:end] = np.mean(dark[0:1,:,::step],axis=0)[:,:end-st]
+                    flat_all[:,sts:ends,st:end] = np.mean(flat[0:1,:,::step],axis=0)[:,:end-st]
+                #data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],proj=(idproj,idproj+1))       
+                with h5py.File(grid[0,::-step][iitile],'r') as fid:
+                   data = fid['exchange/data'][idproj:idproj+1][:]
+                   dark = fid['exchange/data_dark'][0:1]
+                   flat_pre = fid['exchange/data_white_pre'][0:1]
+                   flat_post = fid['exchange/data_white_post'][0:1]
+                   flat = (flat_pre.astype('float32')+flat_post.astype('float32'))*0.5
+                   theta = np.linspace(0,180,data.shape[0])[idproj:idproj+1]
+
                 data = (data-np.mean(dark,axis=0))/np.maximum(1e-3,(np.mean(flat,axis=0)-np.mean(dark,axis=0)))
                 pdata_all[ishift,:,st:end] = data[:,:,::step][:,:,:end-st]
         # create a temporarily DataExchange file
@@ -206,18 +235,18 @@ def shift_manual(args):
         if not os.path.exists(dirPath):
             os.makedirs(dirPath)
         dxchange.write_tiff_stack(pdata_all,f'{dir}_rec/{basename[:-3]}_proj/p',overwrite=True)        
-        if args.recon==True:
-        f = dx.File(tmp_file_name, mode='w') 
-        f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
-        f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
-        f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
-        f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
-        f.close()        
-    
-        cmd = f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type full \
-        --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --nsino-per-chunk {args.nsino_per_chunk} --end-column {args.end_column}'
-        log.warning(cmd)
-        os.system(cmd)   
+        if args.recon=='True':
+            f = dx.File(tmp_file_name, mode='w') 
+            f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
+            f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
+            f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
+            f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
+            f.close()        
+        
+            cmd = f'{args.recon_engine} recon --remove-stripe-method vo-all --binning {args.binning} --reconstruction-type full \
+            --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --nsino-per-chunk {args.nsino_per_chunk} --end-column {args.end_column}'
+            log.warning(cmd)
+            os.system(cmd)   
         
         try_path = f"{os.path.dirname(tmp_file_name)}_rec/tmp_rec/recon*"
         tryproj_path = f"{dir}_rec/{basename[:-3]}_proj/p*"

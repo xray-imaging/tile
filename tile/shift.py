@@ -62,15 +62,10 @@ def center(args):
     log.info('Run find rotation axis location')
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
-    print(data_shape)
     log.info('image   size (x, y) in pixels: (%d, %d)' % (data_shape[2], data_shape[1]))
     log.info('stitch shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
 
-    # check if flip is needed for having tile[0,0] as the left one and at sample_x=0
-    sample_x = args.sample_x
-    x0 = meta_dict[grid[0,0]][sample_x][0]
-    x1 = meta_dict[grid[0,-1]][sample_x][0]
     if args.reverse_step=='True':
         step=-1
     else:
@@ -78,8 +73,7 @@ def center(args):
         
     # ids for slice and projection for shifts testing
     idslice = int((data_shape[1]-1)*args.nsino)
-    idproj = int((data_shape[0]-1)*args.nprojection)
-
+    
     # data size after stitching
     size = int(np.ceil((data_shape[2]+(grid.shape[1]-1)*x_shift)/2**(args.binning+4))*2**(args.binning+4))
     data_all = np.ones([data_shape[0],2**args.binning,size],dtype=data_type)   
@@ -110,8 +104,6 @@ def center(args):
             flat = (flat_pre.astype('float32')+flat_post.astype('float32'))*0.5
         theta = np.linspace(0,180,data.shape[0])
 
- 
-#        data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
         st = itile*x_shift
         end = st+data_shape[2]
         data_all[:data.shape[0],:,st:end] = data[:,:,::step]
@@ -128,7 +120,7 @@ def center(args):
     log.info(f'Created a temporary hdf file: {tmp_file_name}')
     cmd = f'{args.recon_engine} recon --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
             --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
-            --center-search-step {args.center_search_step} --end-column {args.end_column} --nsino-per-chunk 2'
+            --center-search-step {args.center_search_step}  --nsino-per-chunk {args.nsino_per_chunk}'
     log.warning(cmd)
     os.system(cmd)      
     
@@ -147,10 +139,6 @@ def shift_manual(args):
     log.info('stitch shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
 
-    # check if flip is needed for having tile[0,0] as the left one and at sample_x=0
-    sample_x = args.sample_x
-    x0 = meta_dict[grid[0,0]][sample_x][0]
-    x1 = meta_dict[grid[0,-1]][sample_x][0]
     if args.reverse_step=='True':
         step = -1
     else:
@@ -183,14 +171,14 @@ def shift_manual(args):
     x_shifts_res = np.zeros(grid.shape[1],'int')
     x_shifts_res[1:] = x_shift
     for jtile in range(1,grid.shape[1]):      
-        print(jtile)  
+        log.info(f'Stitching tile {jtile}')
         data_all[:]  = 1
         flat_all[:]  = 1
         dark_all[:]  = 0
         pdata_all[:] = 1
         
         for ishift,err_shift in enumerate(arr_err):
-            print(ishift)                
+            log.info(f'{ishift=},{err_shift=}')
             x_shifts = x_shifts_res.copy()
             x_shifts[jtile] += err_shift
             for itile in range(grid.shape[1]):
@@ -199,31 +187,34 @@ def shift_manual(args):
                 else: 
                     iitile=itile
                 if args.recon=='True':
-                   with h5py.File(grid[0,::-step][iitile],'r') as fid:
+                    #log.info('read data for recon')
+                    with h5py.File(grid[0,::-step][iitile],'r') as fid:
                       data = fid['exchange/data'][:,idslice:idslice+2**args.binning][:]
-                      dark = fid['exchange/data_dark'][0:1,idslice:idslice+2**args.binning][:]
-                      flat_pre = fid['exchange/data_white_pre'][0:1,idslice:idslice+2**args.binning][:]
-                      flat_post = fid['exchange/data_white_post'][0:1,idslice:idslice+2**args.binning][:]
+                      dark = fid['exchange/data_dark'][:,idslice:idslice+2**args.binning][:]
+                      flat_pre = fid['exchange/data_white_pre'][:,idslice:idslice+2**args.binning][:]
+                      flat_post = fid['exchange/data_white_post'][:,idslice:idslice+2**args.binning][:]
                       flat = (flat_pre.astype('float32')+flat_post.astype('float32'))*0.5
                       theta = np.linspace(0,180,data.shape[0])
-
-                   # data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
+                   
                 st = np.sum(x_shifts[:itile+1])
                 end = min(st+data_shape[2],size)
                 if args.recon=='True':
+                    #log.info('fill data for recon')
+                    
                     sts = ishift*2**args.binning
                     ends = sts+2**args.binning
                     data_all[:,sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
                     data_all[:data.shape[0],sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
                     data_all[data.shape[0]:,sts:ends,st:end] = data[-1,:,::step][:,:end-st]
-                    dark_all[:,sts:ends,st:end] = np.mean(dark[0:1,:,::step],axis=0)[:,:end-st]
-                    flat_all[:,sts:ends,st:end] = np.mean(flat[0:1,:,::step],axis=0)[:,:end-st]
-                #data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],proj=(idproj,idproj+1))       
+                    dark_all[:,sts:ends,st:end] = np.mean(dark[:,:,::step],axis=0)[:,:end-st]
+                    flat_all[:,sts:ends,st:end] = np.mean(flat[:,:,::step],axis=0)[:,:end-st]
+                
+                #log.info('fill data for proj')
                 with h5py.File(grid[0,::-step][iitile],'r') as fid:
                    data = fid['exchange/data'][idproj:idproj+1][:]
-                   dark = fid['exchange/data_dark'][0:1]
-                   flat_pre = fid['exchange/data_white_pre'][0:1]
-                   flat_post = fid['exchange/data_white_post'][0:1]
+                   dark = fid['exchange/data_dark'][:1]
+                   flat_pre = fid['exchange/data_white_pre'][:1]# use just one for speedup
+                   flat_post = fid['exchange/data_white_post'][:1]
                    flat = (flat_pre.astype('float32')+flat_post.astype('float32'))*0.5
                    theta = np.linspace(0,180,data.shape[0])[idproj:idproj+1]
 
@@ -236,15 +227,19 @@ def shift_manual(args):
             os.makedirs(dirPath)
         dxchange.write_tiff_stack(pdata_all,f'{dir}_rec/{basename[:-3]}_proj/p',overwrite=True)        
         if args.recon=='True':
+            log.info(f'write data,{data.shape=}')
+            log.info(f'write dark,{dark_all.shape=}')
+            log.info(f'write flat,{flat_all.shape=}')
             f = dx.File(tmp_file_name, mode='w') 
             f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
             f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
             f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
-            f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
+            theta = np.linspace(0,180,data_all.shape[0])
+            f.add_entry(dx.Entry.data(theta={'value': theta, 'units':'degrees'}))
             f.close()        
         
-            cmd = f'{args.recon_engine} recon --remove-stripe-method vo-all --binning {args.binning} --reconstruction-type full \
-            --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --nsino-per-chunk {args.nsino_per_chunk} --end-column {args.end_column}'
+            cmd = f'{args.recon_engine} recon --remove-stripe-method vo-all --reconstruction-type full \
+            --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --nsino-per-chunk {args.nsino_per_chunk}'
             log.warning(cmd)
             os.system(cmd)   
         

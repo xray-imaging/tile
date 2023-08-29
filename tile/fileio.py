@@ -47,17 +47,13 @@ import os
 import re
 import h5py
 import numpy as np
-import dxchange
-import glob
 import json
-# import meta # from https://github.com/xray-imaging/meta.git
 
 from collections import deque
 from pathlib import Path
 
 from tile import log
 
-KNOWN_FORMATS = ['dx', 'aps2bm', 'aps7bm', 'aps32id']
 SHIFTS_FILE_HEADER = '# Array shape: '
 
 def write_array(fname, arr):
@@ -89,32 +85,29 @@ def read_array(fname):
             new_data = new_data.reshape(shape)
     except Exception as error: 
         log.error("%s not found" % fname)
-        log.error("run -- $ tile shift -- first")
-        ##FDC shall we return an arrays with zeros? to handle vertial/horizontal scans?
+        log.error("run -- $ tile shift -- first")        
     return new_data
 
 def extract_meta(args,fname):
         
     if os.path.isdir(fname):
-        # Add a trailing slash if missing
-        # top = os.path.join(fname, '')
-        h5_file_list=[]
         meta_dict = {}
         dirs = os.listdir(fname)
         
         for subdir in dirs:
             if subdir=='damaged' or subdir=='tile' or subdir=='tile_rec':
                continue
-            fulldir=os.path.join(fname,subdir)
-            max_size=0
+            fulldir = os.path.join(fname,subdir)
+            # read file of max size in folder
+            max_size = 0
             for f in os.listdir(fulldir):
-                size = os.stat(os.path.join(fulldir, f  )).st_size                
+                size = os.stat(os.path.join(fulldir, f)).st_size                
                 # updating maximum size
                 if size>max_size:
                     max_size = size
                     max_file = os.path.join( fulldir, f  )        
             
-            # h5_file_list.append(max_file)
+            #read corresponding json
             mjson = fulldir+'/'+subdir+'.json'
             sub_dict = extract_dict(args,max_file,mjson)            
             meta_dict.update(sub_dict)        
@@ -126,7 +119,7 @@ def extract_meta(args,fname):
 
 def extract_dict(args,fname,mjson):
 
-    f=open(mjson)
+    f = open(mjson)
     data = json.load(f)
     meta_dict={}
     meta_dict[args.sample_x]=[data['scientificMetadata']['scanParameters']['Sample In']['v']/1000,data['scientificMetadata']['scanParameters']['Sample In']['u']]
@@ -141,21 +134,16 @@ def extract(args):
     log.warning('checking tile files ...')
     file_path = Path(args.folder_name)
 
-    if str(args.file_format) in KNOWN_FORMATS:
 
-        if file_path.is_dir():
-            log.info("Checking directory: %s for a tile scan" % args.folder_name)
-            # Add a trailing slash if missing
-            top = os.path.join(args.folder_name, '')
-            meta_dict = extract_meta(args,args.folder_name)
-
-            return meta_dict
-        else:
-            log.error("directory %s does not contain any file" % args.folder_name)
+    if file_path.is_dir():
+        log.info("Checking directory: %s for a tile scan" % args.folder_name)
+        # Add a trailing slash if missing
+        top = os.path.join(args.folder_name, '')
+        meta_dict = extract_meta(args,args.folder_name)
+        return meta_dict
     else:
-        log.error("  *** %s is not a supported file format" % args.file_format)
-        log.error("supported data formats are: %s, %s, %s, %s" % tuple(KNOWN_FORMATS))
-
+        log.error("directory %s does not contain any file" % args.folder_name)
+    
 
 def tile(args):
     meta_dict = extract(args)
@@ -181,7 +169,6 @@ def tile(args):
     x_start = y_sorted[first_key][sample_x][0] - 1
     y_start = y_sorted[first_key][sample_y][0] - 1 
 
-    #y_sorted[first_key][resolution] = [0.69, 'um']
     x_shift = int((1000*(x_sorted[second_key][sample_x][0]- x_sorted[first_key][sample_x][0]))/y_sorted[first_key][resolution][0])
     y_shift = 0
     
@@ -190,7 +177,6 @@ def tile(args):
     for k, v in y_sorted.items():
         if meta_dict[k][sample_x][0] > x_start:
             key = 'x' + str(tile_index_x) + 'y' + str(tile_index_y)
-            # key = [str(tile_index_x),s tr(tile_index_y)]
             log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k][sample_x][0], meta_dict[k][sample_y][0], k, meta_dict[k][full_file_name][0]))
             tile_index_x = tile_index_x + 1
             x_start = meta_dict[k][sample_x][0]
@@ -224,7 +210,6 @@ def tile(args):
         grid[ind_list[k_file, 1], ind_list[k_file, 0]] = v
         k_file = k_file + 1 
 
-    #proj0, flat0, dark0, theta0 = dxchange.read_aps_tomoscan_hdf5(grid[0,0], proj=(0, 1))
     with h5py.File(grid[0,0],'r') as fid:
         data_shape = fid['exchange/data'].shape
         data_type = fid['exchange/data'].dtype

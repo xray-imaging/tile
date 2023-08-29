@@ -145,7 +145,11 @@ SECTIONS['stitch'] = {
         'default': 64,
         'type': int,        
         'help': "Number of of projections for simultaneous processing",},    
-    }    
+    'test': {
+        'default': 'False',
+        'type': str,
+        'help': 'Process just the first chunk of angles'},  
+} 
 
 SECTIONS['center'] = {
     'nsino': {

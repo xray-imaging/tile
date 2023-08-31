@@ -102,7 +102,7 @@ def center(args):
             flat_pre = fid['exchange/data_white_pre'][:,idslice:idslice+2**args.binning][:]
             flat_post = fid['exchange/data_white_post'][:,idslice:idslice+2**args.binning][:]
             flat = (flat_pre.astype('float32')+flat_post.astype('float32'))*0.5
-        theta = np.linspace(0,180,data.shape[0])
+        theta = np.linspace(0,360,data.shape[0])
 
         st = itile*x_shift
         end = st+data_shape[2]
@@ -118,14 +118,14 @@ def center(args):
 
         f.close()
     log.info(f'Created a temporary hdf file: {tmp_file_name}')
-    cmd = f'{args.recon_engine} recon --binning {args.binning} --reconstruction-type try --file-name {tmp_file_name} \
+    cmd = f'{args.recon_engine} recon --binning {args.binning} --file-type double_fov--reconstruction-type try --file-name {tmp_file_name} \
             --center-search-width {args.center_search_width} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} \
-            --center-search-step {args.center_search_step}  --nsino-per-chunk {args.nsino_per_chunk}'
+            --center-search-step {args.center_search_step}  --nsino-per-chunk 2'
     log.warning(cmd)
-    os.system(cmd)      
+    #os.system(cmd)      
     
-    try_path = f"{os.path.dirname(tmp_file_name)}_rec/try_center/tmp/recon*"
-    log.info(f'Please open the stack of images from {try_path} and select the rotation center')
+    #try_path = f"{os.path.dirname(tmp_file_name)}_rec/try_center/tmp/recon*"
+    log.info(f'Please run the command and open the stack of images from and select the rotation center')
 
 
 def shift_manual(args):
@@ -194,7 +194,7 @@ def shift_manual(args):
                       flat_pre = fid['exchange/data_white_pre'][:,idslice:idslice+2**args.binning][:]
                       flat_post = fid['exchange/data_white_post'][:,idslice:idslice+2**args.binning][:]
                       flat = (flat_pre.astype('float32')+flat_post.astype('float32'))*0.5
-                      theta = np.linspace(0,180,data.shape[0])
+                      theta = np.linspace(0,360,data.shape[0])
                    
                 st = np.sum(x_shifts[:itile+1])
                 end = min(st+data_shape[2],size)
@@ -216,7 +216,7 @@ def shift_manual(args):
                    flat_pre = fid['exchange/data_white_pre'][:1]# use just one for speedup
                    flat_post = fid['exchange/data_white_post'][:1]
                    flat = (flat_pre.astype('float32')+flat_post.astype('float32'))*0.5
-                   theta = np.linspace(0,180,data.shape[0])[idproj:idproj+1]
+                   theta = np.linspace(0,360,data.shape[0])[idproj:idproj+1]
 
                 data = (data-np.mean(dark,axis=0))/np.maximum(1e-3,(np.mean(flat,axis=0)-np.mean(dark,axis=0)))
                 pdata_all[ishift,:,st:end] = data[:,:,::step][:,:,:end-st]
@@ -234,7 +234,7 @@ def shift_manual(args):
             f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
             f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
             f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
-            theta = np.linspace(0,180,data_all.shape[0])
+            theta = np.linspace(0,360,data_all.shape[0])
             f.add_entry(dx.Entry.data(theta={'value': theta, 'units':'degrees'}))
             f.close()        
         

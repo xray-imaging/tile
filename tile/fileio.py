@@ -97,20 +97,21 @@ def extract_meta(args,fname):
         for subdir in dirs:
             if subdir=='damaged' or subdir=='tile' or subdir=='tile_rec':
                continue
-            fulldir = os.path.join(fname,subdir)
-            # read file of max size in folder
-            max_size = 0
-            for f in os.listdir(fulldir):
-                size = os.stat(os.path.join(fulldir, f)).st_size                
-                # updating maximum size
-                if size>max_size:
-                    max_size = size
-                    max_file = os.path.join( fulldir, f  )        
-            
-            #read corresponding json
-            mjson = fulldir+'/'+subdir+'.json'
-            sub_dict = extract_dict(args,max_file,mjson)            
-            meta_dict.update(sub_dict)        
+            if args.substring in subdir:
+                fulldir = os.path.join(fname,subdir)
+                # read file of max size in folder
+                max_size = 0
+                for f in os.listdir(fulldir):
+                    size = os.stat(os.path.join(fulldir, f)).st_size                
+                    # updating maximum size
+                    if size>max_size:
+                        max_size = size
+                        max_file = os.path.join( fulldir, f  )        
+                
+                #read corresponding json
+                mjson = fulldir+'/'+subdir+'.json'
+                sub_dict = extract_dict(args,max_file,mjson)            
+                meta_dict.update(sub_dict)        
     else:
         log.error('No valid HDF5 file(s) found')
         return None
@@ -122,8 +123,8 @@ def extract_dict(args,fname,mjson):
     f = open(mjson)
     data = json.load(f)
     meta_dict={}
-    meta_dict[args.sample_x]=[data['scientificMetadata']['scanParameters']['Sample In']['v']/1000,data['scientificMetadata']['scanParameters']['Sample In']['u']]
-    meta_dict[args.sample_y]=[data['scientificMetadata']['scanParameters']['Sample holder Y-position']['v']/1000,data['scientificMetadata']['scanParameters']['Sample holder Y-position']['u']]
+    meta_dict[args.sample_x]=[data['scientificMetadata']['scanParameters']['Sample In']['v'],data['scientificMetadata']['scanParameters']['Sample In']['u']]
+    meta_dict[args.sample_y]=[data['scientificMetadata']['scanParameters']['Sample holder Y-position']['v'],data['scientificMetadata']['scanParameters']['Sample holder Y-position']['u']]
     meta_dict[args.resolution]=[data['scientificMetadata']['detectorParameters']['Actual pixel size']['v'],data['scientificMetadata']['detectorParameters']['Actual pixel size']['u']]
     meta_dict[args.full_file_name]=fname
     
@@ -160,7 +161,9 @@ def tile(args):
             meta_dict[k][sample_x][0] = i*args.step_x
     log.warning('tile file sorted')
     x_sorted = {k: v for k, v in sorted(meta_dict.items(), key=lambda item: item[1][sample_x])}
-    y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1][sample_y])}
+    y_sorted = x_sorted#{k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1][sample_y])}
+    
+    # y_sorted = {k: v for k, v in sorted(x_sorted.items(), key=lambda item: item[1][sample_y])}
     
     first_key = list(y_sorted.keys())[0]
     second_key = list(y_sorted.keys())[1]

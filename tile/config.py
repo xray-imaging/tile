@@ -82,6 +82,10 @@ SECTIONS['file-io'] = {
         'type': str,
         'help': "Name of the last used directory containing multiple hdf files",
         'metavar': 'PATH'},
+    'substring': {
+        'default': '',
+        'type': str,
+        'help': "Substring for file names"},        
     'tmp-file-name': {
         'default': '/tile/tmp.h5',
         'type': str,
@@ -188,7 +192,8 @@ SECTIONS['center'] = {
         'type': int,
         'default': -1,
         'help': 'End column in x',
-    }
+    },
+    
 }
 
 

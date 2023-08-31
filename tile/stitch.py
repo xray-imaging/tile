@@ -52,14 +52,13 @@ from tile import log
 from tile import fileio
 from threading import Thread
 __all__ = ['stitching']
-def read_proj_chunk(out, inp, st, st_proj, end_proj):
-    
-        """Read a chunk of projections with binning"""
-                        
+
+def read_proj_chunk(out, inp, st, st_proj, end_proj):    
+        """Read a chunk of projections """                        
         out[st_proj:end_proj] = inp[st+st_proj:st+end_proj]
         
 def read_data_parallel(inp,st=0,end=-1,nthreads=8):
-        """Reading data in parallel (good for ssd disks)"""
+        """Reading data in parallel"""
         # parallel read of projections
         if end==-1:
             end=inp.shape[0]
@@ -77,7 +76,6 @@ def read_data_parallel(inp,st=0,end=-1,nthreads=8):
             read_thread.start()
         for proc in procs:
             proc.join()
-
         return data
     
 
@@ -87,7 +85,7 @@ def stitching(args):
     log.info('Run stitching')
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, _, _ = fileio.tile(args)
-    if args.reverse_step=='False':#reverse compared to shift (to do)
+    if args.reverse_step=='True':#reverse compared to shift (to do)
         step = -1
     else:
         step = 1
@@ -95,6 +93,7 @@ def stitching(args):
     
 
     x_shifts = np.fromstring(args.x_shifts[1:-1], sep=',', dtype='int')
+    print(x_shifts)
     size = int(np.ceil(
         (data_shape[2]+np.sum(np.sum(x_shifts)))/16)*16)
     x_shifts=data_shape[-1]-x_shifts
@@ -112,7 +111,7 @@ def stitching(args):
     if not os.path.exists(tile_path):
         os.makedirs(tile_path)
     tile_file_name = os.path.join(tile_path, args.tile_file_name)
-    theta = np.linspace(0,180,-args.start_proj+args.end_proj).astype('float32')
+    theta = np.linspace(0,360,-args.start_proj+args.end_proj).astype('float32')
     os.system(f'rm -rf {tile_file_name}')
     
     dark0 = np.empty([grid.shape[1],1,*data_shape[1:]],dtype='float32') 
@@ -127,7 +126,7 @@ def stitching(args):
             iitile=grid.shape[1]-itile-1
         else: 
             iitile=itile
-        with h5py.File(grid[0, ::step][iitile],'r') as fidin:#filling from another side
+        with h5py.File(grid[0, ::-step][iitile],'r') as fidin:#filling from another side
             flat_pre = read_data_parallel(fidin['/exchange/data_white_pre'],0,-1)
             flat_post = read_data_parallel(fidin['/exchange/data_white_post'],0,-1)
             dark = read_data_parallel(fidin['/exchange/data_dark'],0,-1)

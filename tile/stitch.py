@@ -150,10 +150,13 @@ def stitching(args):
         theta = fid.create_dataset(
             '/exchange/theta', data=theta[args.start_proj:args.end_proj])
 
+        
         for ichunk in range(int(np.ceil((args.end_proj-args.start_proj)/args.nproj_per_chunk))):
             # processing by chunks in angles
             st_chunk = args.start_proj+ichunk*args.nproj_per_chunk
             end_chunk = min(st_chunk+args.nproj_per_chunk, args.end_proj)
+            mst_x=data_all.shape[2]
+            mend_x=0
 
             log.info(f'Stitching projections {st_chunk} - {end_chunk}')
             for itile in range(grid.shape[1]):
@@ -201,6 +204,12 @@ def stitching(args):
                     tmp = data0[:,:,st_x0:end_x0]*v
                     log.info(f"{st_x=},{st_x0=},{end_x=},{end_x0=}")                                        
                     data_all[st_chunk:end_chunk,:,st_x:end_x] += tmp
+                    if mst_x>st_x:
+                        mst_x=st_x
+                    if mend_x<end_x:
+                        mend_x=end_x
+            data_all[st_chunk:end_chunk,:,:mst_x] = data_all[st_chunk:end_chunk,:,mst_x]
+            data_all[st_chunk:end_chunk,:,end_x:] = data_all[st_chunk:end_chunk,:,end_x]
             
             if args.test=='True':
                 exit()

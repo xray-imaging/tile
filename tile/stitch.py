@@ -155,8 +155,8 @@ def stitching(args):
             # processing by chunks in angles
             st_chunk = args.start_proj+ichunk*args.nproj_per_chunk
             end_chunk = min(st_chunk+args.nproj_per_chunk, args.end_proj)
-            mst_x=data_all.shape[2]
-            mend_x=0
+            mst_x = data_all.shape[2]
+            mend_x = 0
 
             log.info(f'Stitching projections {st_chunk} - {end_chunk}')
             for itile in range(grid.shape[1]):
@@ -208,8 +208,11 @@ def stitching(args):
                         mst_x=st_x
                     if mend_x<end_x:
                         mend_x=end_x
-            data_all[st_chunk:end_chunk,:,:mst_x] = data_all[st_chunk:end_chunk,:,mst_x]
-            data_all[st_chunk:end_chunk,:,end_x:] = data_all[st_chunk:end_chunk,:,end_x]
+            print(mst_x,mend_x)
+            if mst_x>0:
+              data_all[st_chunk:end_chunk,:,:mst_x] = data_all[st_chunk:end_chunk,:,mst_x:mst_x+1]
+            if mend_x<data_all.shape[2]:
+              data_all[st_chunk:end_chunk,:,mend_x:] = data_all[st_chunk:end_chunk,:,mend_x-1:mend_x]
             
             if args.test=='True':
                 exit()

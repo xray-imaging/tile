@@ -29,7 +29,9 @@ def read_data_parallel(fname,st=0,end=-1,nthreads=16, out=None):
         return out
 
 
-
+###
+# example of running: python maxiv_sum.py 03
+# should be run after maxiv_rec.py is done
 ############Adjust this###########
 file_path = f'/data/staff/tomograms/experiments/TOMCAT/202309_e20597_kidney/{sys.argv[1]}'
 nangles = 6000

@@ -1,6 +1,8 @@
 import os
 import sys
-
+###
+# example of running: python maxiv_rec.py 03
+# where 03 is folder with datasets (should contain ./tile/tile.h5 generated after stitching)
 #######Adjust this#####
 file_path = f'/data/staff/tomograms/experiments/TOMCAT/202309_e20597_kidney/{sys.argv[1]}'
 nangles = 6000

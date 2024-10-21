@@ -165,6 +165,7 @@ def shift_manual(args):
     data_all = np.ones([data_shape[0],2**args.binning*len(arr_err),size],dtype=data_type)
     dark_all = np.zeros([1,2**args.binning*len(arr_err),size],dtype=data_type)
     flat_all = np.ones([1,2**args.binning*len(arr_err),size],dtype=data_type)    
+    print(data_all.shape)
     
     pdata_all = np.ones([len(arr_err),data_shape[1],size],dtype='float32')
     x_shifts_res = np.zeros(grid.shape[1],'int')
@@ -206,14 +207,15 @@ def shift_manual(args):
         if not os.path.exists(dirPath):
             os.makedirs(dirPath)
         dxchange.write_tiff_stack(pdata_all,f'{dir}_rec/{basename[:-3]}_proj/p',overwrite=True)        
-        if args.recon==True:
+        #if args.recon==True:
         f = dx.File(tmp_file_name, mode='w') 
+        print(data_all.shape)
         f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(data_dark={'value': dark_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(theta={'value': theta*180/np.pi, 'units':'degrees'}))
         f.close()        
-    
+        
         cmd = f'{args.recon_engine} recon --file-type double_fov --binning {args.binning} --reconstruction-type full \
         --file-name {tmp_file_name} --rotation-axis-auto manual --rotation-axis {args.rotation_axis} --nsino-per-chunk {args.nsino_per_chunk} --end-column {args.end_column}'
         log.warning(cmd)

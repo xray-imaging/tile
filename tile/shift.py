@@ -63,6 +63,8 @@ def center(args):
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
 
+    # force float32 for stitching
+    data_type = 'float32'
     log.info('image   size (x, y) in pixels: (%d, %d)' % (data_shape[2], data_shape[1]))
     log.info('stitch shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
@@ -100,12 +102,20 @@ def center(args):
         else: 
             iitile=itile
         data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
+        v = np.linspace(1, 0, data_shape[2]-x_shift, endpoint=False)
+        v = v**5*(126-420*v+540*v**2-315*v**3+70*v**4)
+        vv = np.ones(data_shape[2])
+        if itile<grid.shape[1]-1:
+            vv[x_shift:]=v
+        if itile>0:
+            vv[:data_shape[2]-x_shift]=1-v
+
         st = itile*x_shift
         end = st+data_shape[2]
-        data_all[:data.shape[0],:,st:end] = data[:,:,::step]
-        data_all[data.shape[0]:,:,st:end] = data[-1,:,::step]
-        dark_all[:,:,st:end] = np.mean(dark[:,:,::step],axis=0)
-        flat_all[:,:,st:end] = np.mean(flat[:,:,::step],axis=0)
+        data_all[:data.shape[0],:,st:end] += data[:,:,::step]*vv
+        data_all[data.shape[0]:,:,st:end] += data[-1,:,::step]*vv
+        dark_all[:,:,st:end] += np.mean(dark[:,:,::step],axis=0)*vv
+        flat_all[:,:,st:end] += np.mean(flat[:,:,::step],axis=0)*vv
         f = dx.File(tmp_file_name, mode='w') 
         f.add_entry(dx.Entry.data(data={'value': data_all, 'units':'counts'}))
         f.add_entry(dx.Entry.data(data_white={'value': flat_all, 'units':'counts'}))
@@ -129,7 +139,7 @@ def shift_manual(args):
     log.info('Run manual shift')
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
-
+    data_type='float32'
     log.info('image   size (x, y) in pixels: (%d, %d)' % (data_shape[2], data_shape[1]))
     log.info('stitch shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
@@ -171,6 +181,7 @@ def shift_manual(args):
     x_shifts_res = np.zeros(grid.shape[1],'int')
     x_shifts_res[1:] = x_shift
     for jtile in range(1,grid.shape[1]):      
+        
         print(jtile)  
         data_all[:]  = 1
         flat_all[:]  = 1
@@ -190,17 +201,31 @@ def shift_manual(args):
                     data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],sino=(idslice,idslice+2**args.binning))       
                 st = np.sum(x_shifts[:itile+1])
                 end = min(st+data_shape[2],size)
+
+                v = np.linspace(1, 0, data_shape[2]-x_shift, endpoint=False)
+                v = v**5*(126-420*v+540*v**2-315*v**3+70*v**4)
+                vv = np.ones(data_shape[2])
+                if itile<grid.shape[1]-1:
+                    vv[x_shift:]=v
+                if itile>0:
+                    vv[:data_shape[2]-x_shift]=1-v
+
                 if args.recon=='True':
                     sts = ishift*2**args.binning
                     ends = sts+2**args.binning
-                    data_all[:,sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
-                    data_all[:data.shape[0],sts:ends,st:end] = data[:,:,::step][:,:,:end-st]
-                    data_all[data.shape[0]:,sts:ends,st:end] = data[-1,:,::step][:,:end-st]
-                    dark_all[:,sts:ends,st:end] = np.mean(dark[:,:,::step],axis=0)[:,:end-st]
-                    flat_all[:,sts:ends,st:end] = np.mean(flat[:,:,::step],axis=0)[:,:end-st]
+                    # data_all[:,sts:ends,st:end] = data[:,:,::step][:,:,:end-st]*vv[:end-st]
+                    data_all[:data.shape[0],sts:ends,st:end] += data[:,:,::step][:,:,:end-st]*vv[:end-st]
+                    data_all[data.shape[0]:,sts:ends,st:end] += data[-1,:,::step][:,:end-st]*vv[:end-st]
+                    dark_all[:,sts:ends,st:end] += np.mean(dark[:,:,::step],axis=0)[:,:end-st]*vv[:end-st]
+                    flat_all[:,sts:ends,st:end] += np.mean(flat[:,:,::step],axis=0)[:,:end-st]*vv[:end-st]
                 data,flat,dark,theta = dxchange.read_aps_tomoscan_hdf5(grid[0,::-step][iitile],proj=(idproj,idproj+1))       
                 data = (data-np.mean(dark,axis=0))/np.maximum(1e-3,(np.mean(flat,axis=0)-np.mean(dark,axis=0)))
-                pdata_all[ishift,:,st:end] = data[:,:,::step][:,:,:end-st]
+                pdata_all[ishift,:,st:end] += data[0,:,::step][:,:end-st]*vv[:end-st]
+                if itile==grid.shape[1]-1:
+                    data_all[:,sts:ends,end:]=data_all[:,sts:ends,end-1:end]
+                    dark_all[:,sts:ends,end:]=dark_all[:,sts:ends,end-1:end]
+                    flat_all[:,sts:ends,end:]=flat_all[:,sts:ends,end-1:end]
+                    pdata_all[ishift,:,end:]=pdata_all[ishift,:,end-1:end]
         # create a temporarily DataExchange file
         dir = os.path.dirname(tmp_file_name)
         basename = os.path.basename(tmp_file_name)

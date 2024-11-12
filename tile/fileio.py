@@ -97,6 +97,7 @@ def extract_meta(fname):
         # Add a trailing slash if missing
         top = os.path.join(fname, '')
         h5_file_list = list(filter(lambda x: x.endswith(('.h5', '.hdf')), os.listdir(top)))
+        h5_file_list = [ x for x in h5_file_list if "tile.h5" not in x ]# ignore tile.h5
         h5_file_list.sort()
         meta_dict = {}
         for fname in h5_file_list:

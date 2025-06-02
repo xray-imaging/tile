@@ -97,12 +97,14 @@ def extract_meta(fname):
         # Add a trailing slash if missing
         top = os.path.join(fname, '')
         h5_file_list = list(filter(lambda x: x.endswith(('.h5', '.hdf')), os.listdir(top)))
+        h5_file_list = [ x for x in h5_file_list if "tile.h5" not in x ]# ignore tile.h5
         h5_file_list.sort()
         meta_dict = {}
         for fname in h5_file_list:
             h5fname = top + fname
             sub_dict = extract_dict(h5fname)
-            meta_dict.update(sub_dict)
+            
+            meta_dict.update(sub_dict)        
     else:
         log.error('No valid HDF5 file(s) found')
         return None
@@ -111,10 +113,11 @@ def extract_meta(fname):
 
 def extract_dict(fname):
 
-    tree, meta_data = meta.read_hdf(fname)
-    sub_dict = {fname : meta_data}
+    mp = meta.read_meta.Hdf5MetadataReader(fname)
+    meta_dict = mp.readMetadata()
+    mp.close()
 
-    return sub_dict
+    return {fname:meta_dict}
 
 def extract(args):
 
@@ -164,7 +167,7 @@ def tile(args):
     x_start = y_sorted[first_key][sample_x][0] - 1
     y_start = y_sorted[first_key][sample_y][0] - 1 
 
-    y_sorted[first_key][resolution] = [0.69, 'um']
+    #y_sorted[first_key][resolution] = [0.69, 'um']
     x_shift = int((1000*(x_sorted[second_key][sample_x][0]- x_sorted[first_key][sample_x][0]))/y_sorted[first_key][resolution][0])
     y_shift = 0
     

@@ -122,6 +122,10 @@ SECTIONS['file-io'] = {
         'default': 0,
         'type': float,
         'help': 'When greater than 0, it is used to manually overide the sample x step size stored in the hdf file'},  
+    'recon': {
+        'default': 'True',
+        'type': str,
+        'help': 'Reconstruct slice for manual stitching or not'},  
         }
 
 SECTIONS['stitch'] = {
@@ -168,7 +172,21 @@ SECTIONS['center'] = {
         'type': str,
         'default': 'tomopy',
         'help': "Reconstruction engine (tomopy or tomocupy). ",},    
-        }
+    'reverse-grid': {
+        'type': str,
+        'default': 'False',
+        'help': 'Reverse grid datasets order',},
+    'reverse-step': {
+        'type': str,
+        'default': 'False',
+        'help': 'Reverse step in x',},
+    'end-column': {
+        'type': int,
+        'default': -1,
+        'help': 'End column in x',
+    }
+}
+
 
 SECTIONS['shift'] = {
     'shift-search-width': {

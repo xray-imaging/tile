@@ -59,7 +59,7 @@ __all__ = ['shift_manual',
 def center(args):
     """Find rotation axis location"""
 
-    log.info('Run find rotation axis location')
+    log.info('Run finxxd rotation axis location')
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
 
@@ -67,7 +67,7 @@ def center(args):
     data_type = 'float32'
     log.info('image   size (x, y) in pixels: (%d, %d)' % (data_shape[2], data_shape[1]))
     log.info('stitch shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
-    log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
+    log.info('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
 
     # check if flip is needed for having tile[0,0] as the left one and at sample_x=0
     sample_x = args.sample_x
@@ -78,8 +78,12 @@ def center(args):
     else:
         step=1    
     if args.rotation_axis==-1:
-        args.rotation_axis = data_shape[2]//2
-        
+
+        rotation_axis = (grid.shape[0] * data_shape[2] - (grid.shape[0] -1) * (data_shape[2]-x_shift))//2
+        log.warning('image center in pixel: (%d)' % (rotation_axis))
+        args.rotation_axis = rotation_axis
+        # args.rotation_axis = data_shape[2]//2
+
     # ids for slice and projection for shifts testing
     idslice = int((data_shape[1]-1)*args.nsino)
     idproj = int((data_shape[0]-1)*args.nprojection)

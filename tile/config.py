@@ -167,7 +167,7 @@ SECTIONS['center'] = {
     'rotation-axis': {
         'default': -1.0,
         'type': float,
-        'help': "Location of rotation axis"},
+        'help': "Location of rotation axis, using -1 automatically calculated the center of the horizontally sticked projections"},
     'recon-engine': {     
         'type': str,
         'default': 'tomopy',

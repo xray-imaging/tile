@@ -59,7 +59,7 @@ __all__ = ['shift_manual',
 def center(args):
     """Find rotation axis location"""
 
-    log.info('Run finxxd rotation axis location')
+    log.info('Run find rotation axis location')
     # read files grid and retrieve data sizes
     meta_dict, grid, data_shape, data_type, x_shift, y_shift = fileio.tile(args)
 
@@ -78,12 +78,10 @@ def center(args):
     else:
         step=1    
     if args.rotation_axis==-1:
-
-        rotation_axis = (grid.shape[0] * data_shape[2] - (grid.shape[0] -1) * (data_shape[2]-x_shift))//2
+        rotation_axis = (grid.shape[1] * data_shape[2] - ((grid.shape[1] -1) * x_shift))//2
         log.warning('image center in pixel: (%d)' % (rotation_axis))
         args.rotation_axis = rotation_axis
         # args.rotation_axis = data_shape[2]//2
-
     # ids for slice and projection for shifts testing
     idslice = int((data_shape[1]-1)*args.nsino)
     idproj = int((data_shape[0]-1)*args.nprojection)

@@ -78,10 +78,8 @@ def center(args):
     else:
         step=1    
     if args.rotation_axis==-1:
-        rotation_axis = (grid.shape[1] * data_shape[2] - ((grid.shape[1] -1) * x_shift))//2
-        log.warning('image center in pixel: (%d)' % (rotation_axis))
-        args.rotation_axis = rotation_axis
-        # args.rotation_axis = data_shape[2]//2
+        args.rotation_axis = data_shape[2]//2
+        log.warning('Rotation in pixel: (%d)' % (rotation_axis))
     # ids for slice and projection for shifts testing
     idslice = int((data_shape[1]-1)*args.nsino)
     idproj = int((data_shape[0]-1)*args.nprojection)

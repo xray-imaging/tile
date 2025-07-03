@@ -1,6 +1,9 @@
-====
-Tile
-====
+.. figure:: source/img/tile-logo.png
+   :width: 640px
+   :alt: TomoStream Logo
+   :align: center
+
+
 
 **tile** is a command-line interface for stitching projections in horizontal direction. Stitching is done manually by selecting shifts for each tile. Selection of shifts is based on reconstructed slices and projections.
 

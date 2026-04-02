@@ -19,6 +19,7 @@ from tile import config
 from tile import fileio
 from tile import shift
 from tile import stitch
+from tile import prep
 
 def init(args):
     if not os.path.exists(str(args.config)):
@@ -35,8 +36,8 @@ def run_show(args):
     log.info('tile shift (x, y) in pixels: (%d, %d)' % (x_shift, y_shift))
     log.warning('tile overlap (x, y) in pixels: (%d, %d)' % (data_shape[2]-x_shift, data_shape[1]-y_shift))
 
-    index = [f'x_{num}' for num in range(grid.shape[0])]
-    columns = [f'y_{num}' for num in range(grid.shape[1])]
+    index = [f'y_{num}' for num in range(grid.shape[0])]
+    columns = [f'x_{num}' for num in range(grid.shape[1])]
     log.info('tile file name grid:\n%s' % pd.DataFrame(grid, columns=columns, index=index))
 
 def run_center(args):
@@ -48,22 +49,47 @@ def run_shift(args):
 def run_stitch(args):
     stitch.stitching(args)
 
-def main():   
+def run_panoramic(args):
+    shift.panoramic(args)
+
+def run_bin(args):
+    prep.bin_data(args)
+
+def run_dump_flats(args):
+    prep.dump_flats(args)
+
+def run_vstitch(args):
+    prep.vstitch(args)
+
+def run_double_fov(args):
+    prep.double_fov(args)
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', **config.SECTIONS['general']['config'])
-    show_params     = config.ALL_PARAMS
-    info_params     = config.INFO_PARAMS
-    center_params   = config.CENTER_PARAMS
-    shift_params    = config.SHIFT_PARAMS
-    stitch_params   = config.STITCH_PARAMS
+    show_params       = config.ALL_PARAMS
+    info_params       = config.INFO_PARAMS
+    center_params     = config.CENTER_PARAMS
+    shift_params      = config.SHIFT_PARAMS
+    stitch_params     = config.STITCH_PARAMS
+    panoramic_params  = config.PANORAMIC_PARAMS
+    bin_params        = config.BIN_PARAMS
+    dump_flats_params = config.DUMP_FLATS_PARAMS
+    vstitch_params    = config.VSTITCH_PARAMS
+    double_fov_params = config.DOUBLE_FOV_PARAMS
 
     cmd_parsers = [
-        ('init',        init,           (),                 "Create configuration file"),
-        ('status',      status,         show_params,        "Show the tile-cli status"),
-        ('show',        run_show,       info_params,        "Show the file names in tile  location"),
-        ('center',      run_center,     center_params,      "Find the rotation axis location"),
-        ('shift',       run_shift,      shift_params,       "Calculate the tile horizonal shifts"),
-        ('stitch',      run_stitch,     stitch_params,      "Create a single hdf file containing the tile datasets"),
+        ('init',        init,             (),                 "Create configuration file"),
+        ('status',      status,           show_params,        "Show the tile-cli status"),
+        ('show',        run_show,         info_params,        "Show the file names in tile location"),
+        ('bin',         run_bin,          bin_params,         "Spatially bin raw tile HDF5 files"),
+        ('dump-flats',  run_dump_flats,   dump_flats_params,  "Collect flat field basis from binned files"),
+        ('panoramic',   run_panoramic,    panoramic_params,   "Save a single stitched projection for quick inspection"),
+        ('center',      run_center,       center_params,      "Find the rotation axis location"),
+        ('shift',       run_shift,        shift_params,       "Calculate the tile horizontal shifts"),
+        ('stitch',      run_stitch,       stitch_params,      "Create a single hdf file containing the tile datasets"),
+        ('vstitch',     run_vstitch,      vstitch_params,     "Vertically stitch per-row tile.h5 files"),
+        ('double-fov',  run_double_fov,   double_fov_params,  "Convert 360° acquisition to 180° by stitching paired projections"),
     ]
 
     subparsers = parser.add_subparsers(title="Commands", metavar='')
@@ -75,7 +101,11 @@ def main():
         cmd_parser.set_defaults(_func=func)
     
     args = config.parse_known_args(parser, subparser=True)
-    
+
+    if not hasattr(args, '_func'):
+        parser.print_help()
+        sys.exit(0)
+
     # create logger
     logs_home = args.logs_home
 

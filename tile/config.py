@@ -74,6 +74,10 @@ SECTIONS['general'] = {
         'default': False,
         'help': 'Verbose output',
         'action': 'store_true'},
+    'show': {
+        'default': False,
+        'help': 'Show the panoramic image in a matplotlib window (requires display)',
+        'action': 'store_true'},
         }
 
 SECTIONS['file-io'] = {
@@ -101,7 +105,7 @@ SECTIONS['file-io'] = {
         'type': util.positive_int,
         'default': 0,
         'help': "Reconstruction binning factor as power(2, choice)",
-        'choices': [0, 1, 2, 3]},
+        'choices': [0, 1, 2, 3, 4]},
     'sample-x': {     
         'type': str,
         'default': '/measurement/instrument/sample_motor_stack/setup/x',
@@ -121,7 +125,11 @@ SECTIONS['file-io'] = {
     'step-x': {
         'default': 0,
         'type': float,
-        'help': 'When greater than 0, it is used to manually overide the sample x step size stored in the hdf file'},  
+        'help': 'When greater than 0, it is used to manually overide the sample x step size stored in the hdf file'},
+    'x-shifts': {
+        'default': 'None',
+        'type': str,
+        'help': "Comma-separated list of cumulative x tile shifts in pixels, e.g. [0,100,200]. 'None' = read from metadata."},
     'recon': {
         'default': 'True',
         'type': str,
@@ -129,10 +137,10 @@ SECTIONS['file-io'] = {
         }
 
 SECTIONS['stitch'] = {
-    'x-shifts': {
-        'default': 'None',
-        'type': str,
-        'help': "Projection pairs to find rotation axis. Each second projection in a pair will be flipped and used to find shifts from the first element in a pair. The shifts are used to calculate the center.  Example [0,1499] for a 180 deg scan, or [0,1499,749,2249] for 360, etc.",},            
+    'zinger-level': {
+        'default': 0.08,
+        'type': float,
+        'help': 'Zinger removal threshold: fraction above local temporal median. 0 disables.'},
     'start-proj': {
         'default': 0,
         'type': int,
@@ -141,11 +149,15 @@ SECTIONS['stitch'] = {
         'default': -1,
         'type': int,
         'help': "End projection"},   
-    'nproj-per-chunk': {     
+    'nproj-per-chunk': {
         'default': 64,
-        'type': int,        
-        'help': "Number of of projections for simultaneous processing",},    
-    }    
+        'type': int,
+        'help': "Number of of projections for simultaneous processing",},
+    'max-workers': {
+        'default': 4,
+        'type': int,
+        'help': "Number of parallel threads for chunk processing",},
+    }
 
 SECTIONS['center'] = {
     'nsino': {
@@ -168,13 +180,13 @@ SECTIONS['center'] = {
         'default': -1.0,
         'type': float,
         'help': "LLocation of rotation axis"},
-    'recon-engine': {     
+    'recon-engine': {
         'type': str,
-        'default': 'tomopy',
-        'help': "Reconstruction engine (tomopy or tomocupy). ",},    
+        'default': 'tomocupy',
+        'help': "Reconstruction engine (tomopy or tomocupy). ",},
     'reverse-grid': {
         'type': str,
-        'default': 'False',
+        'default': 'True',
         'help': 'Reverse grid datasets order',},
     'reverse-step': {
         'type': str,
@@ -184,7 +196,25 @@ SECTIONS['center'] = {
         'type': int,
         'default': -1,
         'help': 'End column in x',
-    }
+    },
+    'file-type': {
+        'type': str,
+        'default': 'double_fov',
+        'help': "Tomocupy file type: standard or double_fov",
+    },
+    'nsino-per-chunk': {
+        'type': int,
+        'default': 8,
+        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory. ",},
+    'flat-linear': {
+        'type': str,
+        'default': 'True',
+        'help': "Interpolate flat fields per projection. Assumes equal number of flats at start and end of scan.",},
+    'flats-file': {
+        'default': '',
+        'type': str,
+        'help': 'Path to HDF5 file with flat field basis frames (from dump_flats). '
+                'If set, flat correction uses a per-projection NNLS linear combination of these frames.'},
 }
 
 
@@ -197,19 +227,70 @@ SECTIONS['shift'] = {
         'type': int,
         'default': 1,
         'help': "+/- center search step (pixel). "},
-    'nsino-per-chunk': {     
-        'type': int,
-        'default': 8,
-        'help': "Number of sinograms per chunk. Use larger numbers with computers with larger memory. ",},    
     }
 
-INFO_PARAMS   = ('file-io',)
-CENTER_PARAMS = ('file-io', 'center')
-SHIFT_PARAMS  = ('file-io', 'center', 'shift')
-STITCH_PARAMS = ('file-io', 'center', 'stitch')
-ALL_PARAMS    = ('file-io', 'center', 'shift', 'stitch')
+SECTIONS['bin'] = {
+    'bin-step': {
+        'default': 1,
+        'type': int,
+        'help': "Projection subsampling step (keep every Nth projection). 1 = keep all."},
+    'bin-output-dir': {
+        'default': '',
+        'type': str,
+        'help': "Output directory for binned files. Default: <folder-name>/bin<N>x<N>/ derived from --binning."},
+}
 
-NICE_NAMES = ('General', 'File IO', 'Center', 'Shift', 'Stitch')
+SECTIONS['dump-flats'] = {
+    'dump-flats-output': {
+        'default': 'flats.h5',
+        'type': str,
+        'help': "Output file name for the flat field basis (written inside --folder-name)."},
+    'y-folders': {
+        'default': '',
+        'type': str,
+        'help': "Comma-separated list of y-row subfolders inside --folder-name (e.g. 'y0,y1,y2,y3'). "
+                "Empty = use --folder-name directly."},
+}
+
+SECTIONS['vstitch'] = {
+    'y-shifts': {
+        'default': 'None',
+        'type': str,
+        'help': "Comma-separated cumulative y shifts between tile rows, e.g. '[0,450,450]'. Required."},
+    'vstitch-output': {
+        'default': 'vstitch.h5',
+        'type': str,
+        'help': "Output file name for the vertically stitched dataset (written inside --folder-name)."},
+    'vstitch-pattern': {
+        'default': '',
+        'type': str,
+        'help': "Glob pattern for input tile.h5 files. "
+                "Default (empty): <folder-name>/<y-folders>/tile/tile.h5 or <folder-name>/tile/tile.h5."},
+}
+
+SECTIONS['double-fov'] = {
+    'double-fov-input': {
+        'default': 'vstitch.h5',
+        'type': str,
+        'help': "Input HDF5 file for 360→180 conversion (relative to --folder-name or absolute)."},
+    'double-fov-output': {
+        'default': 'double_fov.h5',
+        'type': str,
+        'help': "Output HDF5 file after 360→180 conversion (relative to --folder-name or absolute)."},
+}
+
+INFO_PARAMS        = ('file-io',)
+CENTER_PARAMS      = ('file-io', 'center')
+SHIFT_PARAMS       = ('file-io', 'center', 'shift')
+STITCH_PARAMS      = ('file-io', 'center', 'stitch')
+PANORAMIC_PARAMS   = ('file-io', 'center', 'stitch')
+BIN_PARAMS         = ('file-io', 'bin')
+DUMP_FLATS_PARAMS  = ('file-io', 'dump-flats')
+VSTITCH_PARAMS     = ('file-io', 'vstitch')
+DOUBLE_FOV_PARAMS  = ('file-io', 'center', 'double-fov')
+ALL_PARAMS         = ('file-io', 'center', 'shift', 'stitch', 'bin', 'dump-flats', 'vstitch', 'double-fov')
+
+NICE_NAMES = ('General', 'File IO', 'Center', 'Shift', 'Stitch', 'Bin', 'Dump Flats', 'VStitch', 'Double FOV')
 
 def get_config_name():
     """Get the command line --config option."""

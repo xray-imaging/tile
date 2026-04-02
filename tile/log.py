@@ -49,6 +49,9 @@
 '''
 import logging
 
+ACTION_LEVEL = 25
+logging.addLevelName(ACTION_LEVEL, 'ACTION')
+
 logger = logging.getLogger(__name__)
 
 def info(msg, *args, **kwargs):
@@ -62,6 +65,10 @@ def warning(msg, *args, **kwargs):
 
 def debug(msg, *args, **kwargs):
     logger.debug(msg, *args, **kwargs)
+
+def action(msg, *args, **kwargs):
+    """Log an operator action request — displayed in red in the terminal."""
+    logger.log(ACTION_LEVEL, msg, *args, **kwargs)
 
 def setup_custom_logger(lfname=None, stream_to_console=True):
 
@@ -93,6 +100,6 @@ class ColoredLogFormatter(logging.Formatter):
             record.message = self.__GREEN + record.message + self.__ENDC
         elif record.levelname == 'WARNING':
             record.message = self.__YELLOW + record.message + self.__ENDC
-        elif record.levelname == 'ERROR':
+        elif record.levelname in ('ERROR', 'ACTION'):
             record.message = self.__RED + record.message + self.__ENDC
         return super().formatMessage(record)

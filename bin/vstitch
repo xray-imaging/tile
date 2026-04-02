@@ -1,0 +1,118 @@
+#!/usr/bin/env python
+"""
+vstitch  –  Vertically stitch tile.h5 datasets.
+
+The input files are expected to already have flat/dark correction applied
+(data_white=1, data_dark=0), as produced by `tile stitch`.
+
+Example:
+    vstitch --pattern "../bin4x4/y*/tile/tile.h5" --y-shifts [0,450,450] --output vstitch.h5
+"""
+
+import argparse
+import glob
+import os
+import sys
+
+import h5py
+import numpy as np
+
+
+def _blend(n):
+    """Quintic blending ramp 0→1 of length n (same kernel as tile stitch)."""
+    v = np.linspace(0, 1, n, endpoint=False)
+    return v**5 * (126 - 420*v + 540*v**2 - 315*v**3 + 70*v**4)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Vertically stitch tile.h5 files.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--pattern', default='../bin4x4/y*/tile/tile.h5',
+                        help='Glob pattern for input files (sorted by name)')
+    parser.add_argument('--y-shifts', required=True,
+                        help='Relative y-shifts between consecutive tiles, e.g. [0,450,450]')
+    parser.add_argument('--output', default='vstitch.h5',
+                        help='Output HDF5 file')
+    parser.add_argument('--nproj-per-chunk', type=int, default=32,
+                        help='Projections processed per iteration')
+    args = parser.parse_args()
+
+    # parse y-shifts
+    y_shifts = np.fromstring(args.y_shifts[1:-1], sep=',', dtype='int')
+
+    # collect and sort input files
+    files = sorted(glob.glob(args.pattern))
+    if not files:
+        sys.exit(f'No files found matching: {args.pattern}')
+    if len(files) != len(y_shifts):
+        sys.exit(f'{len(files)} files found but {len(y_shifts)} y-shifts given')
+
+    print(f'Found {len(files)} file(s):')
+    for f, ys in zip(files, y_shifts):
+        print(f'  y_shift={ys:4d}  {f}')
+
+    # geometry from first file
+    with h5py.File(files[0], 'r') as f0:
+        N_proj, H, W = f0['/exchange/data'].shape
+        theta = f0['/exchange/theta'][:]
+
+    # cumulative row positions: tile i starts at row cum[i]
+    cum = np.array([int(np.sum(y_shifts[:i+1])) for i in range(len(y_shifts))])
+    H_out = H + int(cum[-1])
+
+    print(f'Input  shape: {N_proj} x {H} x {W}')
+    print(f'Output shape: {N_proj} x {H_out} x {W}')
+    print(f'Output file : {args.output}')
+
+    if os.path.exists(args.output):
+        os.remove(args.output)
+
+    with h5py.File(args.output, 'w') as fout:
+        data_out = fout.create_dataset(
+            '/exchange/data', shape=(N_proj, H_out, W), dtype='float32',
+            chunks=(1, H_out, W))
+        fout.create_dataset('/exchange/data_white',
+                            data=np.ones((1, H_out, W), dtype='float32'))
+        fout.create_dataset('/exchange/data_dark',
+                            data=np.zeros((1, H_out, W), dtype='float32'))
+        fout.create_dataset('/exchange/theta', data=theta)
+
+        for st_p in range(0, N_proj, args.nproj_per_chunk):
+            end_p = min(st_p + args.nproj_per_chunk, N_proj)
+            n = end_p - st_p
+            print(f'  projections {st_p:4d} – {end_p:4d}', end='\r', flush=True)
+
+            buf = np.zeros((n, H_out, W), dtype='float32')
+
+            for itile, (fpath, row_st) in enumerate(zip(files, cum)):
+                row_end = row_st + H
+
+                # blending weights along the vertical axis
+                ww = np.ones(H, dtype='float32')
+                if itile < len(files) - 1:
+                    overlap_bot = H - y_shifts[itile + 1]
+                    if overlap_bot > 0:
+                        v = np.linspace(1, 0, overlap_bot, endpoint=False)
+                        v = v**5 * (126 - 420*v + 540*v**2 - 315*v**3 + 70*v**4)
+                        ww[y_shifts[itile + 1]:] = v
+                if itile > 0:
+                    overlap_top = H - y_shifts[itile]
+                    if overlap_top > 0:
+                        v = np.linspace(1, 0, overlap_top, endpoint=False)
+                        v = v**5 * (126 - 420*v + 540*v**2 - 315*v**3 + 70*v**4)
+                        ww[:overlap_top] = 1 - v
+
+                with h5py.File(fpath, 'r') as fin:
+                    chunk = fin['/exchange/data'][st_p:end_p].astype('float32')
+
+                buf[:, row_st:row_end, :] += chunk * ww[np.newaxis, :, np.newaxis]
+
+            np.nan_to_num(buf, nan=0.0, posinf=0.0, neginf=0.0, copy=False)
+            data_out[st_p:end_p] = buf
+
+    print(f'\nDone. Output: {args.output}')
+
+
+if __name__ == '__main__':
+    main()

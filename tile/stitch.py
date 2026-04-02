@@ -47,6 +47,7 @@ import os
 import h5py
 import dxchange
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from tile import log
 from tile import fileio
@@ -110,81 +111,143 @@ def stitching(args):
             if(len(fid['/exchange/theta'][:])>len(theta)):
                 theta = fid['/exchange/theta'][:]
 
+    # load external flat field basis if provided
+    use_flats_basis = bool(args.flats_file)
+    if use_flats_basis:
+        with h5py.File(args.flats_file, 'r') as fb:
+            basis_flats = fb['/exchange/data_white'][:, :, ::step].astype('float32')
+        log.info(f'Loaded flat basis: {basis_flats.shape[0]} frames from {args.flats_file}')
+        # design matrix: mean horizontal profile of each basis frame, shape (H, n_basis)
+        basis_profs = np.mean(basis_flats, axis=2).T.astype('float64')  # (H, n_basis)
+
+    # pre-compute per-tile flat/dark correction arrays (read once, reused for all chunks)
+    tile_dark = []
+    if args.flat_linear == 'True':
+        tile_flat_p0 = []
+        tile_flat_p1 = []
+    else:
+        tile_flat = []
+
+    for itile in range(grid.shape[1]):
+        if args.reverse_grid=='True':
+            iitile=grid.shape[1]-itile-1
+        else:
+            iitile=itile
+        with h5py.File(grid[0, ::-step][iitile],'r') as fidin:
+            flat = fidin['/exchange/data_white'][:]
+            dark = fidin['/exchange/data_dark'][:]
+        tile_dark.append(np.mean(dark[:, :, ::step], axis=0))
+        if args.flat_linear == 'True':
+            n = flat.shape[0]
+            tile_flat_p0.append(np.mean(flat[:n//2, :, ::step], axis=0))
+            tile_flat_p1.append(np.mean(flat[n//2:, :, ::step], axis=0))
+        else:
+            tile_flat.append(np.mean(flat[:, :, ::step], axis=0))
+
     os.system(f'rm -rf {tile_file_name}')
     with h5py.File(tile_file_name, 'w') as fid:
-        # init output arrays
+        # flat/dark correction applied per tile before stitching; store 1 and 0 as placeholders
         data_all = fid.create_dataset('/exchange/data', (args.end_proj-args.start_proj,
                                       data_shape[1], size), dtype=data_type, chunks=(1, data_shape[1], size))
-        flat_all = fid.create_dataset(
-            '/exchange/data_white', (1, data_shape[1], size), dtype=data_type, chunks=(1, data_shape[1], size))
-        dark_all = fid.create_dataset(
-            '/exchange/data_dark', (1, data_shape[1], size), dtype=data_type, chunks=(1, data_shape[1], size))
-        theta = fid.create_dataset(
-            '/exchange/theta', data=theta[args.start_proj:args.end_proj])
+        fid.create_dataset('/exchange/data_white',
+                           data=np.ones((1, data_shape[1], size), dtype=data_type))
+        fid.create_dataset('/exchange/data_dark',
+                           data=np.zeros((1, data_shape[1], size), dtype=data_type))
+        fid.create_dataset('/exchange/theta', data=theta[args.start_proj:args.end_proj])
         write_meta(grid[0, itile],fid)
 
-        for itile in range(grid.shape[1]):
-                
-            if args.reverse_grid=='True':
-                iitile=grid.shape[1]-itile-1
-            else: 
-                iitile=itile
-            with h5py.File(grid[0, ::-step][iitile],'r') as fidin:
-                flat = fidin['/exchange/data_white'][:]
-                dark = fidin['/exchange/data_dark'][:]
-                
-                st = np.sum(x_shifts[:itile+1])
-                end = min(st+data_shape[2], size)
-                vv = np.ones(data_shape[2])
-                if itile<grid.shape[1]-1:
-                    v = np.linspace(1, 0, data_shape[2]-x_shifts[itile+1], endpoint=False)
-                    v = v**5*(126-420*v+540*v**2-315*v**3+70*v**4)                    
-                    vv[x_shifts[itile+1]:]=v
-                if itile>0:
-                    v = np.linspace(1, 0, data_shape[2]-x_shifts[itile], endpoint=False)
-                    v = v**5*(126-420*v+540*v**2-315*v**3+70*v**4)                    
-                    vv[:data_shape[2]-x_shifts[itile]]=1-v
-                dark_all[0,:, st:end] += np.mean(dark[:, :, ::step],axis=0)*vv[:end-st]
-                flat_all[0,:, st:end] += np.mean(flat[:, :, ::step],axis=0)*vv[:end-st]
-            if itile==grid.shape[1]-1:
-                dark_all[0,:,end:]=dark_all[0,:,end-1:end]
-                flat_all[0,:,end:]=flat_all[0,:,end-1:end]
-
-        for ichunk in range(int(np.ceil((args.end_proj-args.start_proj)/args.nproj_per_chunk))):
-            # processing by chunks in angles
-            st_chunk = args.start_proj+ichunk*args.nproj_per_chunk
-            end_chunk = min(st_chunk+args.nproj_per_chunk, args.end_proj)
+        def process_chunk(ichunk):
+            st_chunk = args.start_proj + ichunk * args.nproj_per_chunk
+            end_chunk = min(st_chunk + args.nproj_per_chunk, args.end_proj)
+            chunk_len = end_chunk - st_chunk
 
             log.info(f'Stitching projections {st_chunk} - {end_chunk}')
+            chunk_buf = np.zeros((chunk_len, data_shape[1], size), dtype=data_type)
+            ref_overlap_mean = None
             for itile in range(grid.shape[1]):
-                
-                if args.reverse_grid=='True':
-                    iitile=grid.shape[1]-itile-1
-                else: 
-                    iitile=itile
-                with h5py.File(grid[0, ::-step][iitile],'r') as fidin:
+
+                if args.reverse_grid == 'True':
+                    iitile = grid.shape[1] - itile - 1
+                else:
+                    iitile = itile
+                with h5py.File(grid[0, ::-step][iitile], 'r') as fidin:
                     uids = fidin['/defaults/NDArrayUniqueId'][:]
-                    hdf_location = fidin['/defaults/HDF5FrameLocation']                        
-                    proj_ids = uids[hdf_location[:] == b'/exchange/data']-1
-                    proj_ids = proj_ids[(proj_ids>=st_chunk)*(proj_ids<end_chunk)]
-                    if len(proj_ids)!=end_chunk-st_chunk:
+                    hdf_location = fidin['/defaults/HDF5FrameLocation']
+                    proj_ids = uids[hdf_location[:] == b'/exchange/data'] - 1
+                    proj_ids = proj_ids[(proj_ids >= st_chunk) * (proj_ids < end_chunk)]
+                    if len(proj_ids) != end_chunk - st_chunk:
                         log.warning('There are missing projection in the current tile, setting them to 0')
                     data = fidin['/exchange/data'][proj_ids]
-                    
-                    st = np.sum(x_shifts[:itile+1])
-                    end = min(st+data_shape[2], size)
+
+                    st = np.sum(x_shifts[:itile + 1])
+                    end = min(st + data_shape[2], size)
                     vv = np.ones(data_shape[2])
-                    if itile<grid.shape[1]-1:
-                        v = np.linspace(1, 0, data_shape[2]-x_shifts[itile+1], endpoint=False)
-                        v = v**5*(126-420*v+540*v**2-315*v**3+70*v**4)                    
-                        vv[x_shifts[itile+1]:]=v
-                    if itile>0:
-                        v = np.linspace(1, 0, data_shape[2]-x_shifts[itile], endpoint=False)
-                        v = v**5*(126-420*v+540*v**2-315*v**3+70*v**4)                    
-                        vv[:data_shape[2]-x_shifts[itile]]=1-v
-                    data_all[proj_ids-args.start_proj, :, st:end] += data[:, :, ::step]*vv[:end-st]
-                if itile==grid.shape[1]-1:
-                    data_all[proj_ids-args.start_proj,:,end:]=np.tile(data_all[proj_ids-args.start_proj,:,end-1:end],(1,1,size-end))
+                    if itile < grid.shape[1] - 1:
+                        v = np.linspace(1, 0, data_shape[2] - x_shifts[itile + 1], endpoint=False)
+                        v = v**5 * (126 - 420*v + 540*v**2 - 315*v**3 + 70*v**4)
+                        vv[x_shifts[itile + 1]:] = v
+                    if itile > 0:
+                        v = np.linspace(1, 0, data_shape[2] - x_shifts[itile], endpoint=False)
+                        v = v**5 * (126 - 420*v + 540*v**2 - 315*v**3 + 70*v**4)
+                        vv[:data_shape[2] - x_shifts[itile]] = 1 - v
+
+                    # correct each tile before stitching using that tile's flat/dark
+                    data_f = data[:, :, ::step].copy()
+                    dark_mean = tile_dark[itile]
+                    if use_flats_basis:
+                        from scipy.optimize import nnls 
+                        for li in range(len(proj_ids)):
+                            proj_prof = np.mean(data_f[li], axis=1).astype('float64')
+                            w, _ = nnls(basis_profs, proj_prof)
+                            #log.info(f'proj {proj_ids[li]:4d} tile {itile} coeffs: {np.round(w, 4).tolist()}')
+                            flat_i = np.einsum('k,khw->hw', w, basis_flats)
+                            data_f[li] = (data_f[li] - dark_mean) / (flat_i - dark_mean+1e-3)
+                    elif args.flat_linear == 'True':
+                        for li, gi in enumerate(proj_ids):
+                            t = gi / max(data_shape[0] - 1, 1)
+                            flat_i = (1 - t) * tile_flat_p0[itile] + t * tile_flat_p1[itile]
+                            data_f[li] = (data_f[li] - dark_mean) / (flat_i - dark_mean+ 1e-3)
+                    else:
+                        data_f = (data_f - dark_mean) / (tile_flat[itile] - dark_mean+ 1e-3)
+                    np.nan_to_num(data_f, nan=1.0, posinf=1.0, neginf=1.0, copy=False)
+                    if args.zinger_level > 0:
+                        from scipy.ndimage import median_filter
+                        kernel = (min(5, data_f.shape[0]), 1, 1)
+                        med = median_filter(data_f, size=kernel)
+                        mask = data_f > med * (1 + args.zinger_level)
+                        data_f[mask] = med[mask]
+                    # intensity scale calibration using overlap with previous tile (per projection)
+                    if itile > 0 and ref_overlap_mean is not None:
+                        overlap_cols = data_shape[2] - x_shifts[itile]
+                        cur_means = np.mean(data_f[:, :, :overlap_cols], axis=(1, 2))  # (n_proj,)
+                        ref = ref_overlap_mean[proj_ids - st_chunk]
+                        valid = cur_means > 1e-6
+                        scales = np.where(valid, ref / np.where(valid, cur_means, 1.0), 1.0)
+                        data_f *= scales[:, np.newaxis, np.newaxis]
+                    if itile < grid.shape[1] - 1:
+                        ref_overlap_mean = np.zeros(chunk_len, dtype='float64')
+                        ref_overlap_mean[proj_ids - st_chunk] = np.mean(
+                            data_f[:, :, x_shifts[itile + 1]:], axis=(1, 2))
+
+                    chunk_buf[proj_ids - st_chunk, :, st:end] += data_f[:, :, :end - st] * vv[:end - st]
+                if itile == grid.shape[1] - 1:
+                    chunk_buf[:, :, end:] = np.tile(chunk_buf[:, :, end - 1:end], (1, 1, size - end))
+
+            np.nan_to_num(chunk_buf, nan=1.0, posinf=1.0, neginf=1.0, copy=False)
+            return st_chunk, end_chunk, chunk_buf
+
+        n_chunks = int(np.ceil((args.end_proj - args.start_proj) / args.nproj_per_chunk))
+        pending = {}
+        next_write = args.start_proj
+        with ThreadPoolExecutor(max_workers=args.max_workers) as pool:
+            futures = {pool.submit(process_chunk, i): i for i in range(n_chunks)}
+            for fut in as_completed(futures):
+                st_chunk, end_chunk, chunk_buf = fut.result()
+                pending[st_chunk] = (end_chunk, chunk_buf)
+                while next_write in pending:
+                    ep, buf = pending.pop(next_write)
+                    data_all[next_write - args.start_proj:ep - args.start_proj] = buf
+                    next_write = ep
             
     log.info(f'Output file {tile_file_name}')
     log.info(f'Reconstruct {tile_file_name} with tomocupy:')

@@ -172,13 +172,14 @@ def tile(args):
     y_shift = 0
     
     tile_dict = {}
-    
+    tile_index_x_max = 0
+
     for k, v in y_sorted.items():
         if meta_dict[k][sample_x][0] > x_start:
             key = 'x' + str(tile_index_x) + 'y' + str(tile_index_y)
-            # key = [str(tile_index_x),s tr(tile_index_y)]
             log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k][sample_x][0], meta_dict[k][sample_y][0], k, meta_dict[k][full_file_name][0]))
             tile_index_x = tile_index_x + 1
+            tile_index_x_max = max(tile_index_x_max, tile_index_x)
             x_start = meta_dict[k][sample_x][0]
             first_y = meta_dict[k][sample_y][0]
         else:
@@ -187,12 +188,12 @@ def tile(args):
             key = 'x' + str(tile_index_x) + 'y' + str(tile_index_y)
             log.info('%s: x = %f; y = %f, file name = %s, original file name = %s' % (key, meta_dict[k][sample_x][0], meta_dict[k][sample_y][0], k, meta_dict[k][full_file_name][0]))
             tile_index_x = tile_index_x + 1
+            tile_index_x_max = max(tile_index_x_max, tile_index_x)
             x_start = y_sorted[first_key][sample_x][0] - 1
             y_shift = int((1000*(meta_dict[k][sample_y][0] - first_y)/y_sorted[first_key][resolution][0]))
 
-        tile_dict[key] = k 
+        tile_dict[key] = k
 
-    tile_index_x_max  = tile_index_x
     tile_index_y_max  = tile_index_y + 1
 
     index_list = []
